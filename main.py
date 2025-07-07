@@ -1,7 +1,10 @@
 """
 Kindle history
-Store your read books in file or delete already read book from your e-book
+Store your read books in file or delete already read book from your e-book, like Kindle
+
+Utility gives you an interactive way of using your e-book
 """
+
 import datetime
 import os
 import shutil
@@ -16,25 +19,30 @@ class Format:
     underline_start = '\033[4m'
 
     @staticmethod
-    def prRed(string): print("\033[91m {}\033[00m".format(string))
+    def prRed(string):
+        print("\033[91m {}\033[00m".format(string))
 
     @staticmethod
-    def prGreen(string): print("\033[92m {}\033[00m".format(string))
+    def prGreen(string):
+        print("\033[92m {}\033[00m".format(string))
 
     @staticmethod
-    def prYellow(string): print("\033[93m {}\033[00m".format(string))
+    def prYellow(string):
+        print("\033[93m {}\033[00m".format(string))
 
     @staticmethod
-    def prCyan(string): print("\033[96m {}\033[00m".format(string))
+    def prCyan(string):
+        print("\033[96m {}\033[00m".format(string))
 
     @staticmethod
-    def prLightGray(string): print("\033[97m {}\033[00m".format(string))
+    def prLightGray(string):
+        print("\033[97m {}\033[00m".format(string))
 
 
 ###########Main logic of the app
 
 # App settings:
-APP_VERSION = '1.0.0'
+APP_VERSION = '1.1.0'
 """
 Simple version of the app
 """
@@ -47,6 +55,11 @@ Static file name where you store your statistics about books that you already re
 BOOK_EXTENSIONS: list[str] = ['txt', 'fb2', 'epub', 'pdf', 'doc', 'docx', 'rtf', 'mobi', 'kf8', 'azw', 'lrf', 'djvu']
 """
 Extensions of the books to be located by listing all files in directory.
+"""
+
+CLOSE_MENU_CODE = '666'
+"""
+Code for close menu functionality
 """
 
 # App paths:
@@ -66,6 +79,8 @@ def _is_book(name: str) -> bool:
     for ext in BOOK_EXTENSIONS:
         if name.endswith(ext):
             return True
+        else:
+            return False
 
 
 def list_all_read_book(path):
@@ -87,6 +102,9 @@ def list_all_read_book(path):
                 print(f'{Format.underline_start + str(book_file_counter) + Format.underline_end}: {file}')
                 book_file_counter += 1
 
+            print()  # just add new line after books
+            print(f'{Format.underline_start + CLOSE_MENU_CODE + Format.underline_end}: to exit this menu')
+
             while True:
                 Format.prYellow('Choose book to finish reading, enter number')
                 book_num = int(input('>> '))
@@ -94,8 +112,44 @@ def list_all_read_book(path):
                     book_name = filtered_list[book_num]  # name of the book to delete / save
                     add_new_book(current_dir + os.path.sep + book_name, book_name)
                     break
+                elif book_num == 666:
+                    Format.prYellow('Close menu')
+                    break
     else:
         Format.prRed('Path cannot be null')
+
+
+def count_books():
+    """
+    Function for count books in read file if exists
+    :return: book count in terminal
+    """
+    path_to_read_file = central_dir + os.path.sep + STATIC_FILE_NAME_WITH_READ
+    if os.path.exists(path_to_read_file):
+        book_counter = 0
+        with open(path_to_read_file) as file:
+            for line in file:
+                if line != '\n':
+                    book_counter += 1
+        print(f'Books count is - {Format.underline_start + str(book_counter) + Format.underline_end}')
+    else:
+        Format.prRed('Read book file not found!')
+
+
+def book_delete(path):
+    """
+    Function for deleting book in given path;
+    :param path: path to book
+    :return: None
+    """
+    try:
+        if path.endswith(STATIC_FILE_NAME_WITH_READ):
+            Format.prRed('You cannot delete your read file!')
+        else:
+            os.remove(path)
+            Format.prGreen('Book deleted')
+    except Exception as e:
+        Format.prRed(f'Exception occurred in deleting book in {path} - {e}')
 
 
 def add_new_book(path, book_name: str):
@@ -108,7 +162,8 @@ def add_new_book(path, book_name: str):
         try:
             with open(central_dir + os.path.sep + f'{STATIC_FILE_NAME_WITH_READ}', 'a') as book_file:
                 if STATIC_FILE_NAME_WITH_READ is not None:
-                    book_file.write(book_name + ' ' + str(datetime.date.today()))  # write into file with read books
+                    book_file.write('\n')  # add new line before
+                    book_file.write(book_name + ' - ' + str(datetime.date.today()))  # write into file with read books
                     Format.prGreen('Add new book')
                     while True:  # slice book name for better read in console
                         print(
@@ -119,19 +174,20 @@ def add_new_book(path, book_name: str):
                             move_book(path)
                             break
                         elif user_input == 'no' or user_input == 'n':
+                            book_delete(path)  # delete book if you not want to
                             break
                         else:
                             continue  # continue if user is so dummy, give him another chance!
                 else:
-                    os.remove(path)
+                    book_delete(path)
         except Exception as e:
-            Format.prRed('Exception while adding new book')
+            Format.prRed(f'Exception while adding new book - {e}')
 
 
 def move_book(path):
     """
     Save your book in central directory (app installation home)
-    :param path:
+    :param path: path from where you want to copy read book
     :return: None
     """
     if path is not None:
@@ -140,6 +196,7 @@ def move_book(path):
         except Exception as e:
             Format.prRed(f'Error occurred while saving book in central dir - {e}')
         Format.prGreen('Book save in central directory')
+        book_delete(path)
     else:
         Format.prRed('Path cannot be None')
 
@@ -155,8 +212,9 @@ def print_help():
     print('1) To use this app - place it in directory with books that you already read.')
     print('2) Move to your dir where you want to move your')
     print('3) Choose action with book')
+    print('* You can save your book or just add this book to read list')
     print(f'''
-    *You need to include file with name - "{STATIC_FILE_NAME_WITH_READ}" in dir 
+    **You need to include file with name - "{STATIC_FILE_NAME_WITH_READ}" in dir 
     where you contain this app to write read book to the list.
     '''
           )
@@ -164,7 +222,8 @@ def print_help():
 
 def init_app():
     """
-    Main entry point to app
+    Main entry point to app.
+    Initialize some useful application variables.
     :return: None
     """
     global current_dir, central_dir, book_read_file
@@ -211,11 +270,17 @@ def move_lower():
             print(f'{dir_counter}: {dir.name}')
             dir_counter += 1
 
+        print()  # just empty line
+        print(f'{CLOSE_MENU_CODE}: to exit this menu')
+
         while True:
             print('Enter dir number to move in')
             dir_number = int(input('>> '))
-            if dir_number in range(len(dir_list) + 1):
+            if dir_number in range(len(dir_list)):
                 current_dir = dir_list[dir_number].as_posix()
+                break
+            elif dir_number == 666:
+                Format.prYellow('Close menu')
                 break
 
 
@@ -226,13 +291,17 @@ if __name__ == '__main__':
         Format.prYellow('Available actions:')
         print('1) Move upper')
         print('2) Move lower')
-        print('3) List all files (only books files) in directory')
+        print('3) List all files (only books files) in directory...')
         print('4) Go home')
-        print('5) Exit app')
+
+        print('5) Help')
+        print('6) Count books')
+
+        print('7) Exit app')
         Format.prYellow('Choose action by entering number')
         try:
             act_num: int = int(input('>> '))
-            if act_num in range(1, 6):
+            if act_num in range(1, 8):
                 match act_num:
                     case 1:
                         move_upper()
@@ -244,10 +313,14 @@ if __name__ == '__main__':
                         current_dir = central_dir
                         Format.prGreen('Path changed')
                     case 5:
-                        print('Out app')
+                        print_help()
+                    case 6:
+                        count_books()
+                    case 7:
+                        Format.prCyan('Out app')
                         exit(0)
                     case _:
-                        Format.prRed('Wrong choice')
+                        Format.prRed('Wrong choice, try again!')
                         continue
                 print()
         except Exception as e:
