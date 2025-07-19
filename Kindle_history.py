@@ -43,7 +43,7 @@ class Format:
 ###########Main logic of the app
 
 # App settings:
-__APP_VERSION = '1.2.0'
+__APP_VERSION = '1.2.1'
 """
 Simple version of the app
 """
@@ -94,6 +94,7 @@ def list_favourite_books():
     """
     fav_books = os.listdir(central_dir)
     fav_filtered_list = list(filter(_is_book, fav_books))
+    fav_filtered_list.remove(__STATIC_FILE_NAME_WITH_READ)  # because we list home dir, there will be read.txt
     if len(fav_filtered_list) != 0:
         fav_book_counter = 0
         for fav_book in fav_filtered_list:
@@ -132,7 +133,7 @@ def book_delete(path):
             Format.prRed('You cannot delete your read file!')
         else:
             os.remove(path)
-            Format.prGreen('Book deleted')
+            Format.prGreen('Book deleted from directory')
     except Exception as e:
         Format.prRed(f'Exception occurred in deleting book in {path} - {e}')
 
@@ -147,6 +148,8 @@ def list_all_read_book(path: str | os.PathLike):
     if path is not None:
         files = os.listdir(path)
         filtered_list = list(filter(_is_book, files))  # list with only books
+        if __STATIC_FILE_NAME_WITH_READ in filtered_list:
+            filtered_list.remove(__STATIC_FILE_NAME_WITH_READ)  # remove file with read books
         print('All books in file:')
         if len(filtered_list) == 0:
             print('There are no books in directory')
@@ -182,13 +185,14 @@ def add_new_book(path: str | os.PathLike, book_name: str):
             with open(central_dir + os.path.sep + f'{__STATIC_FILE_NAME_WITH_READ}', 'a') as book_file:
                 if __STATIC_FILE_NAME_WITH_READ is not None:
                     book_file.write('\n')  # add new line before
-                    book_file.write(book_name + ' - ' + str(datetime.date.today()))  # write into file with read books
+                    book_file.write(  # write only first 80 symbols of book name
+                        book_name[0:80] + ' - ' + str(datetime.date.today()))  # write into file with read books
                     Format.prGreen('Add new book')
                     while True:  # slice book name for better read in console
                         print(
                             f'Do you want to save "{Format.underline_start}{book_name[0: 80]}{Format.underline_end}" in your central directory?')
                         print('yes (y) / no (n)')
-                        user_input = input('>> ')
+                        user_input = input(INPUT_SYM)
                         if user_input == 'yes' or user_input == 'y':
                             move_book(path)
                             break
@@ -298,7 +302,7 @@ def move_lower():
 
         while True:
             print('Enter dir number to move in')
-            dir_number = int(input('>> '))
+            dir_number = int(input(INPUT_SYM))
             if dir_number in range(len(dir_list)):
                 current_dir = dir_list[dir_number].as_posix()
                 break
