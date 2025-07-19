@@ -2,6 +2,7 @@
 Kindle history
 Store your read books in file or delete already read book from your e-book
 """
+
 import datetime
 import os
 import shutil
@@ -11,46 +12,52 @@ from pathlib import Path
 class Format:
     """
     Utility class for text formater
+    Includes print functions in different colors and underline technology.
     """
     underline_end = '\033[0m'
     underline_start = '\033[4m'
 
     @staticmethod
-    def prRed(string): print("\033[91m {}\033[00m".format(string))
+    def prRed(string: str): print("\033[91m {}\033[00m".format(string))
 
     @staticmethod
-    def prGreen(string): print("\033[92m {}\033[00m".format(string))
+    def prGreen(string: str): print("\033[92m {}\033[00m".format(string))
 
     @staticmethod
-    def prYellow(string): print("\033[93m {}\033[00m".format(string))
+    def prYellow(string: str): print("\033[93m {}\033[00m".format(string))
 
     @staticmethod
-    def prCyan(string): print("\033[96m {}\033[00m".format(string))
+    def prCyan(string: str): print("\033[96m {}\033[00m".format(string))
 
     @staticmethod
-    def prLightGray(string): print("\033[97m {}\033[00m".format(string))
+    def prLightGray(string: str): print("\033[97m {}\033[00m".format(string))
 
 
 ###########Main logic of the app
 
 # App settings:
-APP_VERSION = '1.0.0'
+__APP_VERSION = '1.1.0'
 """
 Simple version of the app
 """
 
-STATIC_FILE_NAME_WITH_READ = 'read.txt'
+__STATIC_FILE_NAME_WITH_READ = 'read.txt'
 """
 Static file name where you store your statistics about books that you already read.
 """
 
-BOOK_EXTENSIONS: list[str] = ['txt', 'fb2', 'epub', 'pdf', 'doc', 'docx', 'rtf', 'mobi', 'kf8', 'azw', 'lrf', 'djvu']
+__BOOK_EXTENSIONS: list[str] = ['txt', 'fb2', 'epub', 'pdf', 'doc', 'docx', 'rtf', 'mobi', 'kf8', 'azw', 'lrf', 'djvu']
 """
 Extensions of the books to be located by listing all files in directory.
 """
 
+INPUT_SYM = '>> '
+"""
+Symbol that applies in input fields
+"""
+
 # App paths:
-central_dir: str  # directory address where app stored
+central_dir: str  # directory address where app stored (home directory)
 current_dir: str  # pointer to current working directory of the application
 path_to_books_dir: str  # path where your books
 
@@ -60,19 +67,35 @@ book_read_file: str  # path to file where stored read books
 def _is_book(name: str) -> bool:
     """
     Function for filtering directory for books
-    :param name:
-    :return:
+    :param name: name of the file to proceed
+    :return: bool value, if name ended with 'book' extension.
     """
-    for ext in BOOK_EXTENSIONS:
+    for ext in __BOOK_EXTENSIONS:
         if name.endswith(ext):
             return True
 
 
-def list_all_read_book(path):
+def list_favourite_books():
+    """
+    Function for listing favourite books (books that saved in home directory)
+    :return: None
+    """
+    fav_books = os.listdir(central_dir)
+    fav_filtered_list = list(filter(_is_book, fav_books))
+    if len(fav_filtered_list) != 0:
+        fav_book_counter = 0
+        for fav_book in fav_filtered_list:
+            print(f'{fav_book_counter}. {fav_book}')
+            fav_book_counter += 1
+    else:
+        print('There are no favourite or just simple books!')
+
+
+def list_all_read_book(path: str | os.PathLike):
     """
     Function for output all books that have been red.
     outputs only files with books extensions.
-    :param path:
+    :param path: path to directory, which is listed
     :return: None
     """
     if path is not None:
@@ -89,7 +112,7 @@ def list_all_read_book(path):
 
             while True:
                 Format.prYellow('Choose book to finish reading, enter number')
-                book_num = int(input('>> '))
+                book_num = int(input(INPUT_SYM))
                 if book_num in range(len(filtered_list) + 1):
                     book_name = filtered_list[book_num]  # name of the book to delete / save
                     add_new_book(current_dir + os.path.sep + book_name, book_name)
@@ -98,7 +121,7 @@ def list_all_read_book(path):
         Format.prRed('Path cannot be null')
 
 
-def add_new_book(path, book_name: str):
+def add_new_book(path: str | os.PathLike, book_name: str):
     """
     :param book_name: name of the book to add
     :param path: full path to the list with read books
@@ -106,15 +129,15 @@ def add_new_book(path, book_name: str):
     """
     if path is not None:
         try:
-            with open(central_dir + os.path.sep + f'{STATIC_FILE_NAME_WITH_READ}', 'a') as book_file:
-                if STATIC_FILE_NAME_WITH_READ is not None:
+            with open(central_dir + os.path.sep + f'{__STATIC_FILE_NAME_WITH_READ}', 'a') as book_file:
+                if __STATIC_FILE_NAME_WITH_READ is not None:
                     book_file.write(book_name + ' ' + str(datetime.date.today()))  # write into file with read books
                     Format.prGreen('Add new book')
                     while True:  # slice book name for better read in console
                         print(
                             f'Do you want to save "{Format.underline_start}{book_name[0: 80]}{Format.underline_end}" in your central directory?')
                         print('yes (y) / no (n)')
-                        user_input = input('>> ')
+                        user_input = input(INPUT_SYM)
                         if user_input == 'yes' or user_input == 'y':
                             move_book(path)
                             break
@@ -125,13 +148,13 @@ def add_new_book(path, book_name: str):
                 else:
                     os.remove(path)
         except Exception as e:
-            Format.prRed('Exception while adding new book')
+            Format.prRed(f'Exception while adding new book - {e}')
 
 
-def move_book(path):
+def move_book(path: str | os.PathLike):
     """
     Save your book in central directory (app installation home)
-    :param path:
+    :param path: path of the book to move
     :return: None
     """
     if path is not None:
@@ -150,14 +173,19 @@ def print_help():
     :return: help words to poor user
     """
     print('Kindle history app')
-    print(f'App version - {Format.underline_start + APP_VERSION + Format.underline_end}')
+    print(f'App version - {Format.underline_start + __APP_VERSION + Format.underline_end}')
     print('Instruction:')
     print('1) To use this app - place it in directory with books that you already read.')
     print('2) Move to your dir where you want to move your')
     print('3) Choose action with book')
     print(f'''
-    *You need to include file with name - "{STATIC_FILE_NAME_WITH_READ}" in dir 
+    *You need to include file with name - "{__STATIC_FILE_NAME_WITH_READ}" in dir 
     where you contain this app to write read book to the list.
+    Some useful app variables:
+    home directory - {central_dir},
+    current app directory - {current_dir},
+    file with read books - {book_read_file is not None if book_read_file else 'no path'},
+    file extensions of books - {__BOOK_EXTENSIONS}
     '''
           )
 
@@ -171,12 +199,12 @@ def init_app():
     try:
         central_dir = os.getcwd()
         current_dir = os.getcwd()
-        if os.path.exists(central_dir + os.path.sep + f'{STATIC_FILE_NAME_WITH_READ}'):
+        if os.path.exists(central_dir + os.path.sep + f'{__STATIC_FILE_NAME_WITH_READ}'):
             Format.prGreen('Read books file found')
-            book_read_file = os.path.join(central_dir, STATIC_FILE_NAME_WITH_READ)
+            book_read_file = os.path.join(central_dir, __STATIC_FILE_NAME_WITH_READ)
         else:
             Format.prRed('Read books file not found')
-            # raise Exception('With read books not found') # uncomment this line if you want you exit from app
+            # raise Exception('Error with read books not found') # uncomment this line if you want you exit from app
         Format.prGreen('App initialized with paths')
         if current_dir is None:
             raise Exception('Current directory cannot be None.')
@@ -213,26 +241,62 @@ def move_lower():
 
         while True:
             print('Enter dir number to move in')
-            dir_number = int(input('>> '))
+            dir_number = int(input(INPUT_SYM))
             if dir_number in range(len(dir_list) + 1):
                 current_dir = dir_list[dir_number].as_posix()
                 break
 
 
+def app_settings():
+    global __STATIC_FILE_NAME_WITH_READ, current_dir
+    while True:
+        print(f'Your current path is - "{Format.underline_start + current_dir + Format.underline_end}"')
+        Format.prYellow('Available actions in app settings:')
+        print('1) Go home path')
+        print('2) Change file with already read books')
+        print('4) Close menu')
+        try:
+            act_num: int = int(input(INPUT_SYM))
+            if act_num in range(1, 4):
+                match act_num:
+                    case 1:
+                        current_dir = central_dir
+                        Format.prGreen('Path changed')
+                    case 2:
+                        new_name = input('Input new name, >> ')
+                        if new_name is not None:
+                            __STATIC_FILE_NAME_WITH_READ = new_name
+                            Format.prGreen(f'Name, where stored file with books changed to {new_name}')
+                            break
+                        else:
+                            Format.prRed('Wrong new name or empty, try again')
+                            continue
+                    case 3:
+                        pass
+                    case 4:
+                        break
+                    case _:
+                        continue
+        except Exception as e:
+            Format.prRed(f'Exception occurred in settings - {e}.')
+            exit(1)
+
+
 if __name__ == '__main__':
     init_app()
     while True:
-        print(f'Your current path is - "{Format.underline_start + current_dir + Format.underline_end}"')
+        print(f'Your current path is - "{Format.underline_start + str(current_dir) + Format.underline_end}"')
         Format.prYellow('Available actions:')
         print('1) Move upper')
         print('2) Move lower')
         print('3) List all files (only books files) in directory')
-        print('4) Go home')
-        print('5) Exit app')
+        print('4) List favourite books (in home directory)')
+        print('5) App setting...')
+        print('6) Exit app')
         Format.prYellow('Choose action by entering number')
         try:
-            act_num: int = int(input('>> '))
-            if act_num in range(1, 6):
+            act_num: int = int(input(INPUT_SYM))
+            if act_num in range(1, 6):  # from 1 to 6
                 match act_num:
                     case 1:
                         move_upper()
@@ -241,15 +305,16 @@ if __name__ == '__main__':
                     case 3:
                         list_all_read_book(current_dir)
                     case 4:
-                        current_dir = central_dir
-                        Format.prGreen('Path changed')
+                        list_favourite_books()
                     case 5:
-                        print('Out app')
+                        app_settings()
+                    case 6:
+                        print('Out app, bye!')
                         exit(0)
                     case _:
                         Format.prRed('Wrong choice')
                         continue
-                print()
+                print()  # simple space after menu
         except Exception as e:
             Format.prRed(f'Exception occurred in Main cycle of the program - {e}')
             exit(1)
