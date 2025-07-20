@@ -4,11 +4,36 @@ Store your read books in file or delete already read book from your e-book, like
 
 Utility gives you an interactive way of using your e-book
 """
-
 import datetime
+import inspect
 import os
+import platform
 import shutil
+import sys
 from pathlib import Path
+
+
+####################Tests
+class Kindle_history_test:
+    """
+    Class for testing app.
+    Include unit tests for testing app for bugs or undefined behavior
+    """
+
+    def __init__(self):
+        print('Test class do action')
+
+    def test_delete_book(self):
+        pass
+
+    def test_format_class(self):
+        pass
+
+    def test_init_app(self):
+        pass
+
+
+####################
 
 
 class Format:
@@ -43,7 +68,7 @@ class Format:
 ###########Main logic of the app
 
 # App settings:
-__APP_VERSION = '1.2.1'
+__APP_VERSION = '1.3.0'
 """
 Simple version of the app
 """
@@ -75,6 +100,11 @@ path_to_books_dir: str  # path where your books
 
 book_read_file: str  # path to file where stored read books
 
+FULL_PATH_TO_READ_FILE: str
+"""
+Alias variable name for central dir + file name with read books
+"""
+
 
 def _is_book(name: str) -> bool:
     """
@@ -100,7 +130,6 @@ def list_favourite_books():
         for fav_book in fav_filtered_list:
             print(f'{fav_book_counter}. {fav_book}')
             fav_book_counter += 1
-
     else:
         print('There are no favourite or just simple books!')
 
@@ -110,10 +139,9 @@ def count_books():
     Function for count books in read file if exists
     :return: book count in terminal
     """
-    path_to_read_file = central_dir + os.path.sep + __STATIC_FILE_NAME_WITH_READ
-    if os.path.exists(path_to_read_file):
+    if os.path.exists(FULL_PATH_TO_READ_FILE):
         book_counter = 0
-        with open(path_to_read_file) as file:
+        with open(FULL_PATH_TO_READ_FILE) as file:
             for line in file:
                 if line != '\n':
                     book_counter += 1
@@ -174,6 +202,25 @@ def list_all_read_book(path: str | os.PathLike):
         Format.prRed('Path cannot be null')
 
 
+def creation_date(path_to_file):
+    """
+    Try to get the date that a file was created, falling back to when it was
+    last modified if that isn't possible.
+    See http://stackoverflow.com/a/39501288/1709587 for explanation.
+    """
+    if platform.system() == 'Windows':
+        return str(os.path.getctime(path_to_file))
+    elif platform.system() == 'Linux':
+        try:
+            mtime = os.path.getmtime(path_to_file)
+            mtime_readable = datetime.date.fromtimestamp(mtime)
+            return str(mtime_readable)
+        except AttributeError:
+            return str(datetime.datetime.now())
+    else:
+        pass
+
+
 def add_new_book(path: str | os.PathLike, book_name: str):
     """
     :param book_name: name of the book to add
@@ -182,22 +229,24 @@ def add_new_book(path: str | os.PathLike, book_name: str):
     """
     if path is not None:
         try:
-            with open(central_dir + os.path.sep + f'{__STATIC_FILE_NAME_WITH_READ}', 'a') as book_file:
+            with open(FULL_PATH_TO_READ_FILE, 'a') as book_file:
                 if __STATIC_FILE_NAME_WITH_READ is not None:
                     book_file.write('\n')  # add new line before
+                    if len(book_name) > 80:
+                        book_name = book_name[0:80] + '...'
                     book_file.write(  # write only first 80 symbols of book name
-                        book_name[0:80] + ' - ' + str(datetime.date.today()))  # write into file with read books
+                        book_name + ' - ' + str(creation_date(path)))  # write into file with read books
                     Format.prGreen('Add new book')
                     while True:  # slice book name for better read in console
                         print(
-                            f'Do you want to save "{Format.underline_start}{book_name[0: 80]}{Format.underline_end}" in your central directory?')
+                            f'Do you want to save "{Format.underline_start}{book_name}{Format.underline_end}" in your central directory?')
                         print('yes (y) / no (n)')
                         user_input = input(INPUT_SYM)
                         if user_input == 'yes' or user_input == 'y':
                             move_book(path)
                             break
                         elif user_input == 'no' or user_input == 'n':
-                            book_delete(path)  # delete book if you not want to
+                            book_delete(path)  # delete book if you not want to save it
                             break
                         else:
                             continue  # continue if user is so dummy, give him another chance!
@@ -239,10 +288,10 @@ def print_help():
     *You need to include file with name - "{__STATIC_FILE_NAME_WITH_READ}" in dir 
     where you contain this app to write read book to the list.
     Some useful app variables:
-    home directory - {central_dir},
-    current app directory - {current_dir},
-    file with read books - {book_read_file is not None if book_read_file else 'no path'},
-    file extensions of books - {__BOOK_EXTENSIONS}
+        Home directory - {central_dir},
+        Current app directory - {current_dir},
+        File with read books - {book_read_file is not None if 'Book file exist' else 'No path given'},
+        File extensions of books - {__BOOK_EXTENSIONS}
     '''
           )
 
@@ -253,11 +302,12 @@ def init_app():
     Initialize some useful application variables.
     :return: None
     """
-    global current_dir, central_dir, book_read_file
+    global current_dir, central_dir, book_read_file, FULL_PATH_TO_READ_FILE
     try:
         central_dir = os.getcwd()
         current_dir = os.getcwd()
-        if os.path.exists(central_dir + os.path.sep + f'{__STATIC_FILE_NAME_WITH_READ}'):
+        FULL_PATH_TO_READ_FILE = central_dir + os.path.sep + __STATIC_FILE_NAME_WITH_READ
+        if os.path.exists(FULL_PATH_TO_READ_FILE):
             Format.prGreen('Read books file found')
             book_read_file = os.path.join(central_dir, __STATIC_FILE_NAME_WITH_READ)
         else:
@@ -311,17 +361,22 @@ def move_lower():
                 break
 
 
-def app_settings():
+def app_settings_menu():
+    """
+    Menu with app settings
+    :return:
+    """
     global __STATIC_FILE_NAME_WITH_READ, current_dir
     while True:
         print(f'Your current path is - "{Format.underline_start + current_dir + Format.underline_end}"')
         Format.prYellow('Available actions in app settings:')
         print('1) Go home path')
         print('2) Change file with already read books')
+        print('3) Print app help')
         print('4) Close menu')
         try:
             act_num: int = int(input(INPUT_SYM))
-            if act_num in range(1, 4):
+            if act_num in range(1, 5):  # from 1 to 4
                 match act_num:
                     case 1:
                         current_dir = central_dir
@@ -336,10 +391,11 @@ def app_settings():
                             Format.prRed('Wrong new name or empty, try again')
                             continue
                     case 3:
-                        pass
+                        print_help()
                     case 4:
                         break
                     case _:
+                        Format.prRed('Wrong choice')
                         continue
         except Exception as e:
             Format.prRed(f'Exception occurred in settings - {e}.')
@@ -347,41 +403,61 @@ def app_settings():
 
 
 if __name__ == '__main__':
-    init_app()
-    while True:
-        print(f'Your current path is - "{Format.underline_start + current_dir + Format.underline_end}"')
-        Format.prYellow('Available actions:')
-        print('1) Move upper')
-        print('2) Move lower')
-        print('3) List all files (only books files) in directory')
-        print('4) List favourite books (in home directory)')
-        print('5) App setting...')
-        print('6) Count books')
-        print('7) Exit app')
-        Format.prYellow('Choose action by entering number')
-        try:
-            act_num: int = int(input(INPUT_SYM))
-            if act_num in range(1, 8):  # from 1 to 7
-                match act_num:
-                    case 1:
-                        move_upper()
-                    case 2:
-                        move_lower()
-                    case 3:
-                        list_all_read_book(current_dir)
-                    case 4:
-                        list_favourite_books()
-                    case 5:
-                        app_settings()
-                    case 6:
-                        count_books()
-                    case 7:
-                        print('Out app, bye!')
-                        exit(0)
-                    case _:
-                        Format.prRed('Wrong choice')
-                        continue
-                print()  # simple space after menu
-        except Exception as e:
-            Format.prRed(f'Exception occurred in Main cycle of the program - {e}')
-            exit(1)
+    cli_args = sys.argv
+    if len(cli_args) == 1:
+        init_app()
+        while True:
+            print(f'Your current path is - "{Format.underline_start + current_dir + Format.underline_end}"')
+            Format.prYellow('Available actions:')
+            print('1) Move upper')
+            print('2) Move lower')
+            print('3) List all files (only books files) in directory')
+            print('4) List favourite books (in home directory)')
+            print('5) App setting...')
+            print('6) Count books')
+            print('7) Exit app')
+            Format.prYellow('Choose action by entering number')
+            try:
+                act_num: int = int(input(INPUT_SYM))
+                if act_num in range(1, 8):  # from 1 to 8
+                    match act_num:
+                        case 1:
+                            move_upper()
+                        case 2:
+                            move_lower()
+                        case 3:
+                            list_all_read_book(current_dir)
+                        case 4:
+                            list_favourite_books()
+                        case 5:
+                            app_settings_menu()
+                        case 6:
+                            count_books()
+                        case 7:
+                            print('Out app, bye!')
+                            exit(0)
+                        case _:
+                            Format.prRed('Wrong choice')
+                            continue
+                    print()  # simple space after menu
+            except Exception as e:
+                Format.prRed(f'Exception occurred in Main cycle of the program - {e}')
+                exit(1)
+    elif len(cli_args) == 2 and cli_args[1] == 'test':  # static name of the test mode
+        def call_method(o, name):
+            """
+            Function for reflective access into object;
+            :param o: object for reflective access
+            :param name: name of the method
+            :return: None
+            """
+            return getattr(o, name)()
+
+
+        test_class = Kindle_history_test()
+        methods = [name for name, value in
+                   inspect.getmembers(Kindle_history_test, inspect.isfunction) if
+                   name != '__init__']  # turn on test mode
+
+        for method in methods:
+            call_method(test_class, method)
