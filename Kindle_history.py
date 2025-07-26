@@ -68,7 +68,7 @@ class Format:
 ###########Main logic of the app
 
 # App settings:
-__APP_VERSION = '1.3.0'
+__APP_VERSION = '1.4.0'
 """
 Simple version of the app
 """
@@ -402,38 +402,87 @@ def app_settings_menu():
             exit(1)
 
 
+def find_book():
+    """
+    Function for finding book in read file.
+    :return: None
+    """
+    while True:
+        Format.prYellow('Enter book name to find')
+        book_to_find = input(INPUT_SYM)
+        if book_to_find != '' and book_to_find is not None:
+            with open(FULL_PATH_TO_READ_FILE) as book_file:
+                for book in book_file:
+                    if book.find(book_to_find):
+                        Format.prRed('Book found')
+                        break
+                    else:
+                        Format.prGreen('Book not found')
+                        break
+                break  # exit loop if book found or not
+
+
+def action_menu():
+    """
+    Main menu with actions
+    :return: None
+    """
+    while True:
+        print(f'Your current path is - "{Format.underline_start + current_dir + Format.underline_end}"')
+        Format.prYellow('Available actions in app settings:')
+        print('1) Move upper')
+        print('2) Move lower')
+        print('3) Count books')
+        print('4) Find book')
+        print('5) Close menu')
+        try:
+            act_num: int = int(input(INPUT_SYM))
+            if act_num in range(1, 6):  # from 1 to 4
+                match act_num:
+                    case 1:
+                        move_upper()
+                    case 2:
+                        move_lower()
+                    case 3:
+                        count_books()
+                    case 4:
+                        find_book()
+                    case 5:
+                        break
+                    case _:
+                        Format.prRed('Wrong choice')
+                        continue
+        except Exception as e:
+            Format.prRed(f'Exception occurred in settings - {e}.')
+            exit(1)
+
+
 if __name__ == '__main__':
-    cli_args = sys.argv
+    cli_args = sys.argv  # get cli arguments
     if len(cli_args) == 1:
         init_app()
         while True:
             print(f'Your current path is - "{Format.underline_start + current_dir + Format.underline_end}"')
             Format.prYellow('Available actions:')
-            print('1) Move upper')
-            print('2) Move lower')
+            print('1) Action menu...')
+            print('2) App setting...')
             print('3) List all files (only books files) in directory')
             print('4) List favourite books (in home directory)')
-            print('5) App setting...')
-            print('6) Count books')
-            print('7) Exit app')
+            print('5) Exit app')
             Format.prYellow('Choose action by entering number')
             try:
                 act_num: int = int(input(INPUT_SYM))
-                if act_num in range(1, 8):  # from 1 to 8
+                if act_num in range(1, 6):  # from 1 to 6
                     match act_num:
                         case 1:
-                            move_upper()
+                            action_menu()
                         case 2:
-                            move_lower()
+                            app_settings_menu()
                         case 3:
                             list_all_read_book(current_dir)
                         case 4:
                             list_favourite_books()
                         case 5:
-                            app_settings_menu()
-                        case 6:
-                            count_books()
-                        case 7:
                             print('Out app, bye!')
                             exit(0)
                         case _:
@@ -444,20 +493,10 @@ if __name__ == '__main__':
                 Format.prRed(f'Exception occurred in Main cycle of the program - {e}')
                 exit(1)
     elif len(cli_args) == 2 and cli_args[1] == 'test':  # static name of the test mode
-        def call_method(o, name):
-            """
-            Function for reflective access into object;
-            :param o: object for reflective access
-            :param name: name of the method
-            :return: None
-            """
-            return getattr(o, name)()
-
-
         test_class = Kindle_history_test()
         methods = [name for name, value in
                    inspect.getmembers(Kindle_history_test, inspect.isfunction) if
                    name != '__init__']  # turn on test mode
 
         for method in methods:
-            call_method(test_class, method)
+            getattr(test_class, method)
