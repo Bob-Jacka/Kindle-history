@@ -68,7 +68,7 @@ class Format:
 ###########Main logic of the app
 
 # App settings:
-__APP_VERSION = '1.4.0'
+__APP_VERSION = '1.5.0'
 """
 Simple version of the app
 """
@@ -98,7 +98,10 @@ central_dir: str  # directory address where app stored (home directory)
 current_dir: str  # pointer to current working directory of the application
 path_to_books_dir: str  # path where your books
 
-book_read_file: str  # path to file where stored read books
+book_read_file: str
+"""
+Alias name for path where stored file with books history
+"""
 
 FULL_PATH_TO_READ_FILE: str
 """
@@ -239,11 +242,14 @@ def add_new_book(path: str | os.PathLike, book_name: str):
                     Format.prGreen('Add new book')
                     while True:  # slice book name for better read in console
                         print(
-                            f'Do you want to save "{Format.underline_start}{book_name}{Format.underline_end}" in your central directory?')
-                        print('yes (y) / no (n)')
+                            f'Do you want to save "{Format.underline_start}{book_name}{Format.underline_end}" (and save points) in your central directory?')
+                        print('yes (y) / no (n)')  # ask user if user want to save book and save point in book
                         user_input = input(INPUT_SYM)
                         if user_input == 'yes' or user_input == 'y':
                             move_book(path)
+                            if os.path.exists():  # Also save save point if exists
+                                move_book()
+                                Format.prGreen('Save points also saved')
                             break
                         elif user_input == 'no' or user_input == 'n':
                             book_delete(path)  # delete book if you not want to save it
@@ -264,7 +270,7 @@ def move_book(path: str | os.PathLike):
     """
     if path is not None:
         try:
-            shutil.copy(path, central_dir)  # {src} {dest}
+            shutil.copy2(path, central_dir)  # {src} {dest}
         except Exception as e:
             Format.prRed(f'Error occurred while saving book in central dir - {e}')
         Format.prGreen('Book save in central directory')
@@ -312,6 +318,12 @@ def init_app():
             book_read_file = os.path.join(central_dir, __STATIC_FILE_NAME_WITH_READ)
         else:
             Format.prRed('Read books file not found')
+            Format.prYellow('Would you like to create file with read books? (yes(y) /no (n))')
+            user_choice = input(INPUT_SYM)
+            if user_choice == 'yes' or user_choice == 'y':
+                os.mknod(central_dir + os.sep + __STATIC_FILE_NAME_WITH_READ)
+                book_read_file = os.path.join(central_dir, __STATIC_FILE_NAME_WITH_READ)
+                Format.prGreen('File for your book history created!')
             # raise Exception('With read books not found') # uncomment this line if you want you exit from app
         Format.prGreen('App initialized with paths')
         if current_dir is None:
