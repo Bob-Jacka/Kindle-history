@@ -10,6 +10,7 @@ import os
 import platform
 import shutil
 import sys
+from copy import copy
 from pathlib import Path
 
 
@@ -21,16 +22,37 @@ class Kindle_history_test:
     """
 
     def __init__(self):
-        print('Test class do action')
+        print('Test class do test actions')
 
-    def test_delete_book(self):
-        pass
+    def test_delete_book1(self):
+        delete_fs_entity('')
 
-    def test_format_class(self):
-        pass
+    def test_delete_book2(self):
+        delete_fs_entity('')
+
+    def test_move_book(self):
+        move_fs_entity('')
+
+    def test_move_directory(self):
+        move_fs_entity('')
+
+    def test_format_class1(self):
+        Format.prRed('Hello world')
+
+    def test_format_class2(self):
+        Format.prYellow('Hello world')
+
+    def test_format_class3(self):
+        Format.prGreen('Hello world')
+
+    def test_format_class4(self):
+        Format.prCyan('Hello world')
+
+    def test_format_class5(self):
+        Format.prLightGray('Hello world')
 
     def test_init_app(self):
-        pass
+        init_app()
 
 
 ####################
@@ -68,7 +90,7 @@ class Format:
 ###########Main logic of the app
 
 # App settings:
-__APP_VERSION = '1.5.0'
+__APP_VERSION = '1.6.0'
 """
 Simple version of the app
 """
@@ -94,9 +116,20 @@ Symbol that applies in input fields
 """
 
 # App paths:
-central_dir: str  # directory address where app stored (home directory)
-current_dir: str  # pointer to current working directory of the application
-path_to_books_dir: str  # path where your books
+central_dir: str
+"""
+directory address where app stored (home directory)
+"""
+
+current_dir: str
+"""
+pointer to current working directory of the application
+"""
+
+path_to_books_dir: str
+"""
+path where your books stored
+"""
 
 book_read_file: str
 """
@@ -107,6 +140,63 @@ FULL_PATH_TO_READ_FILE: str
 """
 Alias variable name for central dir + file name with read books
 """
+
+
+class Book_data:
+    """
+    Class for encapsulating book data
+    """
+
+    __SAVE_POINT_EXTENSION: str = '.sdr'
+    """
+    Extension of the file with bookmarks in cracked Kindle device. 
+    """
+
+    def __init__(self, current_dir: str | os.PathLike, book_name: str):
+        self.current_dir = current_dir
+        self.book_name = book_name
+
+    def get_current_dir(self) -> str:
+        return self.current_dir
+
+    def get_book_name(self) -> str:
+        return self.book_name
+
+    def get_book_extension(self) -> str:
+        """
+        Receives book extension by cutting book name
+        :return: string value for book extension
+        """
+        global __BOOK_EXTENSIONS
+        copy_book_name = copy(self.book_name)
+        book_ext = copy_book_name[-1:copy_book_name.find('.')]
+        if book_ext in __BOOK_EXTENSIONS:
+            return book_ext
+        else:
+            Format.prRed('Book extension does not support')
+
+    def get_full_path(self) -> str:
+        """
+        Method for returning full path by concatenating current dir and book name
+        :return: string value
+        """
+        return self.current_dir + self.book_name
+
+    def get_save_point_path(self) -> str:
+        """
+        Method for returning path to save points.
+        Do not exception safe, need to check path before use
+        :return: string value
+        """
+        return self.current_dir + self.book_name[:self.book_name.find('.')] + self.__SAVE_POINT_EXTENSION
+
+    def get_save_point_name(self):
+        """
+        Method for retrieving name with save point dir extension.
+        Do not exception safe, need to check path before use
+        :return:
+        """
+        return self.book_name[:self.book_name.find('.')] + self.__SAVE_POINT_EXTENSION
 
 
 def _is_book(name: str) -> bool:
@@ -153,20 +243,63 @@ def count_books():
         Format.prRed('Read book file not found!')
 
 
-def book_delete(path):
+def delete_fs_entity(path: str | os.PathLike):
     """
-    Function for deleting book in given path;
+    Function for deleting book in given path, also can delete directory with save points;
     :param path: path to book
     :return: None
     """
-    try:
-        if path.endswith(__STATIC_FILE_NAME_WITH_READ):
-            Format.prRed('You cannot delete your read file!')
+    if path is not None:
+        if os.path.isfile(path):
+            try:
+                if path.endswith(__STATIC_FILE_NAME_WITH_READ):
+                    Format.prRed('You cannot delete your read file!')
+                else:
+                    os.remove(path)
+                    Format.prGreen('Book deleted from directory')
+            except Exception as e:
+                Format.prRed(f'Exception occurred in deleting book in {path} - {e}')
+
+        elif os.path.isdir(path):
+            try:
+                shutil.rmtree(path)
+                Format.prGreen('Directory deleted')
+            except Exception as e:
+                Format.prRed(f'Exception occurred in deleting directory in {path} - {e}')
+    else:
+        Format.prRed('Path cannot be None')
+
+
+def move_fs_entity(path: str | os.PathLike, dir_name: str = ''):
+    """
+    Save your book in central directory (app installation home)
+    :param path: path from where you want to copy read book
+    :param dir_name: *optional parameter, special for directory copying. Use for creating new directory and copy all into
+    :return: None
+    """
+    if path is not None:
+        if os.path.isfile(path):
+            try:
+                shutil.copy2(path, central_dir)  # {src} {dest}
+                Format.prGreen('Book save in central directory')
+            except Exception as e:
+                Format.prRed(f'Error occurred while saving book in central dir - {e}')
+
+        elif os.path.isdir(path):
+            try:
+                new_save_point_path = central_dir + os.sep + dir_name
+                os.mkdir(new_save_point_path)  # create new directory, instead of deleting old
+                shutil.copytree(path, new_save_point_path, dirs_exist_ok=True)  # {src} {dest}
+                Format.prGreen('Directory save in central directory')
+            except Exception as e:
+                Format.prRed(f'Error occurred while saving directory in central dir - {e}')
+
         else:
-            os.remove(path)
-            Format.prGreen('Book deleted from directory')
-    except Exception as e:
-        Format.prRed(f'Exception occurred in deleting book in {path} - {e}')
+            Format.prRed('Object type nor file or directory')
+            raise Exception(f'Cannot determine object type of {path}')
+        delete_fs_entity(path)
+    else:
+        Format.prRed('Path cannot be None')
 
 
 def list_all_read_book(path: str | os.PathLike):
@@ -196,7 +329,12 @@ def list_all_read_book(path: str | os.PathLike):
                 book_num = int(input(INPUT_SYM))
                 if book_num in range(len(filtered_list) + 1):
                     book_name = filtered_list[book_num]  # name of the book to delete / save
-                    add_new_book(current_dir + os.path.sep + book_name, book_name)
+                    add_new_book(
+                        Book_data(
+                            current_dir=current_dir + os.sep,
+                            book_name=book_name
+                        )
+                    )
                     break
                 elif book_num == int(CLOSE_MENU_CODE):
                     Format.prYellow('Close menu')
@@ -224,59 +362,70 @@ def creation_date(path_to_file):
         pass
 
 
-def add_new_book(path: str | os.PathLike, book_name: str):
+def is_need_for_new_line() -> bool:
     """
-    :param book_name: name of the book to add
-    :param path: full path to the list with read books
+    Super dummy function
+    :return: bool value if need for new line in read file
+    """
+    books_counter: int = 0
+    new_line_counter: int = 0
+    with open(FULL_PATH_TO_READ_FILE, 'r') as book_file:
+        while True:
+            line = book_file.readline()
+
+            if line.endswith('\n'):
+                new_line_counter += 1
+
+            if line == '':
+                break
+
+            books_counter += 1
+    if books_counter > new_line_counter:
+        return True
+    elif books_counter == new_line_counter:
+        return False
+    else:
+        return False
+
+
+def add_new_book(book_data: Book_data):
+    """
+    :param book_data: tuple with book info, where first argument is path to book and second argument is book name
     :return: None
     """
-    if path is not None:
+    if book_data is not None:
         try:
-            with open(FULL_PATH_TO_READ_FILE, 'a') as book_file:
+            with open(FULL_PATH_TO_READ_FILE, 'a') as read_book_file:
+                book_name: str  # name of the book to proceed
                 if __STATIC_FILE_NAME_WITH_READ is not None:
-                    book_file.write('\n')  # add new line before
-                    if len(book_name) > 80:
-                        book_name = book_name[0:80] + '...'
-                    book_file.write(  # write only first 80 symbols of book name
-                        book_name + ' - ' + str(creation_date(path)))  # write into file with read books
-                    Format.prGreen('Add new book')
+                    if is_need_for_new_line():
+                        read_book_file.write('\n')  # add new line before
+                    if len(book_data.get_book_name()) > 80:  # write only first 80 symbols of book name
+                        book_name = copy(book_data.get_book_name())[0:80] + '...'
+                    else:
+                        book_name = copy(book_data.get_book_name())  # do not cut book name
+                    read_book_file.write(book_name + ' - ' + str(creation_date(book_data.get_full_path())))
                     while True:  # slice book name for better read in console
                         print(
                             f'Do you want to save "{Format.underline_start}{book_name}{Format.underline_end}" (and save points) in your central directory?')
                         print('yes (y) / no (n)')  # ask user if user want to save book and save point in book
                         user_input = input(INPUT_SYM)
                         if user_input == 'yes' or user_input == 'y':
-                            move_book(path)
-                            if os.path.exists():  # Also save save point if exists
-                                move_book()
+                            move_fs_entity(book_data.get_full_path())
+                            if os.path.exists(book_data.get_save_point_path()):  # Also save bookmarks if exists
+                                move_fs_entity(book_data.get_save_point_path(),
+                                               dir_name=book_data.get_save_point_name())
                                 Format.prGreen('Save points also saved')
                             break
                         elif user_input == 'no' or user_input == 'n':
-                            book_delete(path)  # delete book if you not want to save it
+                            delete_fs_entity(book_data.get_full_path())  # delete book if you not want to save it
                             break
                         else:
                             continue  # continue if user is so dummy, give him another chance!
                 else:
-                    book_delete(path)
+                    delete_fs_entity(book_data.get_full_path())
         except Exception as e:
             Format.prRed(f'Exception while adding new book - {e}')
-
-
-def move_book(path: str | os.PathLike):
-    """
-    Save your book in central directory (app installation home)
-    :param path: path from where you want to copy read book
-    :return: None
-    """
-    if path is not None:
-        try:
-            shutil.copy2(path, central_dir)  # {src} {dest}
-        except Exception as e:
-            Format.prRed(f'Error occurred while saving book in central dir - {e}')
-        Format.prGreen('Book save in central directory')
-        book_delete(path)
-    else:
-        Format.prRed('Path cannot be None')
 
 
 def print_help():
@@ -453,8 +602,10 @@ def action_menu():
                 match act_num:
                     case 1:
                         move_upper()
+                        break
                     case 2:
                         move_lower()
+                        break
                     case 3:
                         count_books()
                     case 4:
@@ -464,6 +615,7 @@ def action_menu():
                     case _:
                         Format.prRed('Wrong choice')
                         continue
+                print()
         except Exception as e:
             Format.prRed(f'Exception occurred in settings - {e}.')
             exit(1)
@@ -476,7 +628,7 @@ if __name__ == '__main__':
         while True:
             print(f'Your current path is - "{Format.underline_start + current_dir + Format.underline_end}"')
             Format.prYellow('Available actions:')
-            print('1) Action menu...')
+            print('1) Move menu...')
             print('2) App setting...')
             print('3) List all files (only books files) in directory')
             print('4) List favourite books (in home directory)')
@@ -498,7 +650,7 @@ if __name__ == '__main__':
                             print('Out app, bye!')
                             exit(0)
                         case _:
-                            Format.prRed('Wrong choice')
+                            Format.prRed('Wrong choice, try again')
                             continue
                     print()  # simple space after menu
             except Exception as e:
