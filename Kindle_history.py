@@ -16,22 +16,116 @@ from abc import (
 )
 from copy import copy
 from pathlib import Path
-from typing import override
+from typing import (
+    override,
+    TextIO
+)
 
-####################
+####################Logger
+"""
+File with custom logger class for your small console app
+"""
+
+import logging
+
+
+class BotLogger:
+    """
+    Custom logger class for telegram bot / Locust test and С+ web doc, and now for C+ dependencies manager.
+    """
+
+    __log_file: TextIO  # file for logs
+    __logger: logging.Logger  # private instance of composite logger
+    __is_file_write: bool  # is need write to file
+    __is_logging: bool  # do you need logging or not
+    __log_file_name: str  # name of the log file
+
+    def __init__(self, name: str = 'simple_logger', is_file_write: bool = False, is_on: bool = True):
+        self.__logger = logging.getLogger(name)
+        self.__is_logging = is_on
+        if is_file_write:
+            self.__is_file_write = True
+            self.__get_log_file()
+        else:
+            self.__is_file_write = False
+
+    def log(self, msg: str, level: int = 1, stacklevel: int = 1, color: str = '\033[97m'):
+        """
+        Method for writing logs into console or text file.
+        :param msg: message to be written.
+        :param level: level of logging, 1 by default.
+        :param stacklevel: level of the stack.
+        :param color: color of the log message in ANSI format.
+        :return: None
+        """
+        try:
+            if self.__is_logging:
+                formated_msg = f"{(datetime.datetime.now())}: '{msg}'."
+                colored_formated_msg = color + formated_msg + '\033[00m'
+                if self.__is_file_write:
+                    self.__log_file.write(formated_msg)
+                    self.__logger.log(msg=colored_formated_msg, stacklevel=stacklevel, level=level)
+                    print(colored_formated_msg)
+                else:
+                    self.__logger.log(msg=colored_formated_msg, stacklevel=stacklevel, level=level)
+                    print(colored_formated_msg)
+            else:
+                pass  # simple pass instruction for pass if you do not want logging in your small console app
+        except Exception as e:
+            print(f"Error occurred while writing log file - {e}")
+
+    def __get_log_file(self):
+        """
+        Creates log file for bot actions
+        :return: None
+        """
+        try:
+            self.__log_file = open(self.__log_file_name)
+        except Exception as e:
+            print(f"{(datetime.datetime.now())}: Exception occurred in logger - {e}.")
+            self.__log_file.close()
+
+    def is_log_file_opened(self) -> bool:
+        return self.__log_file is not None and self.__is_file_write
+
+    def __close_log_file(self):
+        """
+        Closes log file
+        :return: None
+        """
+        try:
+            self.__log_file.close()
+        except Exception as e:
+            print(f"{(datetime.datetime.now())}: Error in closing log file - {e}.")
+
+    def is_file_write(self):
+        """
+        Method for is writing info
+        :return: bool value
+        """
+        return self.__is_file_write
+
+    def get_log_file(self):
+        """
+        Method for getting log file descriptor
+        :return:
+        """
+        return self.__log_file
+
+    def set_log_file_name(self, log_file_name: str):
+        """
+        Setter method for logger file name
+        :return: None
+        """
+        if log_file_name is not None:
+            self.__log_file_name = log_file_name
+        else:
+            print('Log file name cannot be None')
+
 
 ###########Main logic of the app
 
 # App settings:
-__APP_VERSION = '2.0.0'
-"""
-Simple version of the app
-"""
-
-__BOOK_EXTENSIONS: list[str] = ['txt', 'fb2', 'epub', 'pdf', 'doc', 'docx', 'rtf', 'mobi', 'kf8', 'azw', 'lrf', 'djvu']
-"""
-Extensions of the books to be located by listing all files in directory.
-"""
 
 CLOSE_MENU_CODE = '666'
 """
@@ -69,6 +163,13 @@ FULL_PATH_TO_READ_FILE: str
 Alias variable name for central dir + file name with read books
 """
 
+logger: BotLogger
+"""
+Global instance of logger class.
+Change logger parameter to turn on logs in console.
+Logger creates in different branches of app execution.
+"""
+
 
 class Format:
     """
@@ -101,7 +202,8 @@ class Format:
 
 class Book_data:
     """
-    Class for encapsulating book data
+    Class for encapsulating book data.
+    Include dir where book stored and its name.
     """
 
     __SAVE_POINT_EXTENSION: str = '.sdr'
@@ -109,8 +211,8 @@ class Book_data:
     Extension of the file with bookmarks in cracked Kindle device. 
     """
 
-    def __init__(self, current_dir: str | os.PathLike, book_name: str):
-        self.current_dir = current_dir
+    def __init__(self, current_working_dir: str | os.PathLike = '.', book_name: str = ''):
+        self.current_dir = current_working_dir
         self.book_name = book_name
 
     def get_current_dir(self) -> str:
@@ -119,22 +221,21 @@ class Book_data:
     def get_book_name(self) -> str:
         return self.book_name
 
-    def get_book_extension(self) -> str:
+    def get_book_extension(self, book_extensions: list) -> str | None:
         """
         Receives book extension by cutting book name
-        :return: string value for book extension
+        :return: string value for book extension or None if book not found
         """
-        global __BOOK_EXTENSIONS
         copy_book_name = copy(self.book_name)
         book_ext = copy_book_name[-1:copy_book_name.find('.')]
-        if book_ext in __BOOK_EXTENSIONS:
+        if book_ext in book_extensions:
             return book_ext
         else:
             Format.prRed('Book extension does not support')
 
     def get_full_path(self) -> str:
         """
-        Method for returning full path by concatenating current dir and book name
+        Method for returning full path by concatenating current dir and book name.
         :return: string value
         """
         return self.current_dir + self.book_name
@@ -142,18 +243,25 @@ class Book_data:
     def get_save_point_path(self) -> str:
         """
         Method for returning path to save points.
-        Do not exception safe, need to check path before use
+        Do not exception safe, need to check path before use.
         :return: string value
         """
         return self.current_dir + self.book_name[:self.book_name.find('.')] + self.__SAVE_POINT_EXTENSION
 
-    def get_save_point_name(self):
+    def get_save_point_name(self) -> str:
         """
         Method for retrieving name with save point dir extension.
-        Do not exception safe, need to check path before use
-        :return:
+        Do not exception safe, need to check path before use.
+        :return: name of bookmark dir
         """
         return self.book_name[:self.book_name.find('.')] + self.__SAVE_POINT_EXTENSION
+
+    def has_bookmark_dir(self) -> bool:
+        """
+        Method for checking if bookmark dir exists
+        :return: bool value of existence.
+        """
+        return Path(self.book_name[:self.book_name.find('.')] + self.__SAVE_POINT_EXTENSION).exists()
 
 
 class Strategy(ABC):
@@ -182,22 +290,25 @@ class Strategy(ABC):
             current_dir = os.getcwd()
             FULL_PATH_TO_READ_FILE = central_dir + os.path.sep + self.__STATIC_FILE_NAME_WITH_READ
             if os.path.exists(FULL_PATH_TO_READ_FILE):
-                Format.prGreen('Read books file found')
+                logger.log('Read books file found')
                 book_read_file = os.path.join(central_dir, self.__STATIC_FILE_NAME_WITH_READ)
             else:
-                Format.prRed('Read books file not found')
+                logger.log('Read books file not found')
                 Format.prYellow('Would you like to create file with read books? (yes(y) /no (n))')
                 user_choice = input(INPUT_SYM)
                 if user_choice == 'yes' or user_choice == 'y':
-                    os.mknod(central_dir + os.sep + self.__STATIC_FILE_NAME_WITH_READ)
+                    os.mknod(central_dir + os.sep + self.get_static_file_with_red())
                     book_read_file = os.path.join(central_dir, self.__STATIC_FILE_NAME_WITH_READ)
-                    Format.prGreen('File for your book history created!')
-                # raise Exception('With read books not found') # uncomment this line if you want you exit from app
-            Format.prGreen('App initialized with paths in manual mode')
+                    logger.log('File for your book history created!')
+                else:
+                    logger.log('Read file not found and create, app closing')
+                    exit(1)
+            logger.log('App initialized with paths in manual mode')
             if current_dir is None:
+                logger.log('Current directory cannot be None.')
                 raise Exception('Current directory cannot be None.')
         except Exception as e:
-            Format.prRed(f'Some exception occurred in init app - {e}')
+            logger.log(f'Some exception occurred in init app - {e}')
             exit(1)
 
     def get_static_file_with_red(self) -> str:
@@ -209,10 +320,10 @@ class Strategy(ABC):
 
     def app_settings_menu(self) -> None:
         """
-        Menu with app settings
+        Menu with app settings.
         :return: None
         """
-        global __STATIC_FILE_NAME_WITH_READ, current_dir
+        global current_dir
         while True:
             print(f'Your current path is - "{Format.underline_start + current_dir + Format.underline_end}"')
             Format.prYellow('Available actions in app settings:')
@@ -244,7 +355,7 @@ class Strategy(ABC):
                             Format.prRed('Wrong choice')
                             continue
             except Exception as e:
-                Format.prRed(f'Exception occurred in settings - {e}.')
+                logger.log(f'Exception occurred in settings - {e}.')
                 exit(1)
 
     def print_help(self):
@@ -252,23 +363,30 @@ class Strategy(ABC):
         Standard help function
         :return: help words to poor user
         """
-        global __APP_VERSION, __BOOK_EXTENSIONS
         print('Kindle history app')
-        print(f'App version - {Format.underline_start + __APP_VERSION + Format.underline_end}')
+        print(f'App version - {"2.0.0"}')
         print('Instruction:')
         print('1) To use this app - place it in directory with books that you already read.')
         print('2) Move to your dir where you want to move your')
         print('3) Choose action with book')
-        print(f'''
-        *You need to include file with name - "{self.__STATIC_FILE_NAME_WITH_READ}" in dir 
-        where you contain this app to write read book to the list.
-        Some useful app variables:
-            Home directory - {central_dir},
-            Current app directory - {current_dir},
-            File with read books - {book_read_file is not None if 'Book file exist' else 'No path given'},
-            File extensions of books - {__BOOK_EXTENSIONS}
-        '''
-              )
+        print(f'*You need to include file with name - "{self.__STATIC_FILE_NAME_WITH_READ}" in dir ')
+        print('where you contain this app to write read book to the list.')
+        print('Some useful app variables:')
+        print(f'Home directory - {central_dir},')
+        print(f'Current app directory - {current_dir},')
+        print(f'File with read books - {book_read_file is not None if 'Book file exist' else 'No path given'},')
+        print(f'File extensions of books - {'txt', 'fb2', 'epub', 'pdf', 'doc', 'docx', 'rtf', 'mobi', 'kf8', 'azw', 'lrf', 'djvu'}')
+        print('Ways to use this app:')
+        print('1. Use with config')
+        print('2. Use without config - manually choose auto or manual mode for application work.')
+        while True:
+            print('Would you like to see help for config file - yes (y) or no (n)?')
+            user_input = input(INPUT_SYM)
+            if user_input == 'yes' or user_input == 'y':
+                Fs_utility.App_config.get_help_config()
+                break
+            else:
+                break
 
     @abstractmethod
     def do_algorithm(self):
@@ -288,18 +406,19 @@ class AutoStrategy(Strategy):
     def __init__(self):
         super().__init__()
 
+    @override
     def do_algorithm(self):
         self.init_app()
         while True:
             print(f'Your current path is - "{Format.underline_start + current_dir + Format.underline_end}"')
             Format.prYellow('Available actions:')
-            print('1) Start process')
+            print('1) Start auto process')
             print('2) App setting...')
             print('3) Exit app')
             Format.prYellow('Choose action by entering number')
             try:
                 act_num: int = int(input(INPUT_SYM))
-                if act_num in range(1, 6):  # from 1 to 6
+                if act_num in range(1, 4):  # from 1 to 4
                     match act_num:
                         case 1:
                             self.__auto_process_books()
@@ -313,19 +432,66 @@ class AutoStrategy(Strategy):
                             continue
                     print()  # simple space after menu
             except Exception as e:
-                Format.prRed(f'Exception occurred in Main cycle of the program - {e}')
+                logger.log(f'Exception occurred in Main cycle of the program - {e}')
                 exit(1)
 
     @override
     def add_new_book(self, book: Book_data):
-        pass
+        if book is not None:
+            try:
+                book_name: str  # name of the book to proceed
+                if self.__STATIC_FILE_NAME_WITH_READ is not None:
+                    if self.fs_util.is_need_for_new_line():
+                        self.fs_util.file_with_read_book.write('\n')  # add new line before
 
-    def __auto_process_books(self) -> None:
+                    if len(book.get_book_name()) > 80:  # write only first 80 symbols of book name
+                        book_name = copy(book.get_book_name())[0:80] + '...'
+                    else:
+                        book_name = copy(book.get_book_name())  # do not cut book name
+
+                    self.fs_util.file_with_read_book.write(
+                        book_name + ' - ' + str(self.fs_util.creation_date(book.get_full_path())))
+                    self.fs_util.move_fs_entity(book.get_full_path())
+                    self.fs_util.move_fs_entity(book.get_save_point_path(),
+                                                dir_name=book.get_save_point_name())
+                    logger.log('Save points also saved')
+                    self.fs_util.delete_fs_entity(
+                        book.get_full_path())  # delete book if you not want to save it
+                else:
+                    self.fs_util.delete_fs_entity(book.get_full_path())
+
+            except Exception as e:
+                logger.log(f'Exception while adding new book - {e}')
+
+    def __auto_process_books(self, path_to_process='..') -> None:
         """
-        Main method of the auto strategy class
+        Main method of the auto strategy class.
+        :param path_to_process: path where to start processing
         :return: None
         """
-        pass
+        p = Path(path_to_process)  # move out of read directory
+        global_dir = p.iterdir()
+        dirs_list: list = list()
+        for entry in global_dir:  # add entries if directory. All directories with books
+            if entry.is_dir():
+                dirs_list.append(entry.absolute().__str__())
+
+        for file in dirs_list:  # process directories in global_dir
+            if Path(file).is_dir():
+                for book_file in file:  # process books files in directory
+                    if self.fs_util.is_book(book_file):
+                        logger.log(f'Found book in directory - {book_file}')
+                        book = Book_data(current_dir, book_file)
+                        if book.has_bookmark_dir():
+                            self.add_new_book(book)
+                        else:
+                            logger.log('Book add cancel, no bookmark dir found')
+                    else:
+                        pass
+            else:
+                logger.log('Path is a file')
+        else:
+            pass
 
 
 class ManualStrategy(Strategy):
@@ -337,6 +503,7 @@ class ManualStrategy(Strategy):
     def __init__(self):
         super().__init__()
 
+    @override
     def do_algorithm(self):
         self.init_app()
         while True:
@@ -368,7 +535,7 @@ class ManualStrategy(Strategy):
                             continue
                     print()  # simple space after menu
             except Exception as e:
-                Format.prRed(f'Exception occurred in Main cycle of the program - {e}')
+                logger.log(f'Exception occurred in Main cycle of the program - {e}')
                 exit(1)
 
     def __move_menu(self):
@@ -386,7 +553,7 @@ class ManualStrategy(Strategy):
             print('5) Close menu')
             try:
                 act_num: int = int(input(INPUT_SYM))
-                if act_num in range(1, 6):  # from 1 to 4
+                if act_num in range(1, 6):  # from 1 to 5
                     match act_num:
                         case 1:
                             self.move_upper()
@@ -401,11 +568,11 @@ class ManualStrategy(Strategy):
                         case 5:
                             break
                         case _:
-                            Format.prRed('Wrong choice')
+                            Format.prRed('Wrong choice, try again')
                             continue
                     print()
             except Exception as e:
-                Format.prRed(f'Exception occurred in settings - {e}.')
+                logger.log(f'Exception occurred in settings - {e}.')
                 exit(1)
 
     def move_upper(self):
@@ -428,7 +595,7 @@ class ManualStrategy(Strategy):
         if len(dir_list) == 0:
             Format.prRed('There are no directories nearby')
         else:
-            dir_counter = 0  # change value to zero if you are programmer
+            dir_counter = 0  # change value to zero if you are a programmer.
             for dir in dir_list:
                 print(f'{dir_counter}: {dir.name}')
                 dir_counter += 1
@@ -443,7 +610,7 @@ class ManualStrategy(Strategy):
                     current_dir = dir_list[dir_number].as_posix()
                     break
                 elif dir_number == int(CLOSE_MENU_CODE):
-                    Format.prYellow('Close menu')
+                    logger.log('Close menu')
                     break
 
     def __list_all_read_book(self, path: str | os.PathLike):
@@ -456,7 +623,7 @@ class ManualStrategy(Strategy):
 
         if path is not None:
             files = os.listdir(path)
-            filtered_list = list(filter(_is_book, files))  # list with only books
+            filtered_list = list(filter(self.fs_util.is_book, files))  # list with only books
             if self.get_static_file_with_red() in filtered_list:
                 filtered_list.remove(self.get_static_file_with_red())  # remove file with read books
             print('All books in file:')
@@ -476,7 +643,7 @@ class ManualStrategy(Strategy):
                         book_name = filtered_list[book_num]  # name of the book to delete / save
                         self.add_new_book(
                             Book_data(
-                                current_dir=current_dir + os.sep,
+                                current_working_dir=current_dir + os.sep,
                                 book_name=book_name
                             )
                         )
@@ -485,7 +652,7 @@ class ManualStrategy(Strategy):
                         Format.prYellow('Close menu')
                         break
         else:
-            Format.prRed('Path cannot be null')
+            logger.log('Path cannot be null')
 
     def __list_favourite_books(self):
         """
@@ -493,7 +660,7 @@ class ManualStrategy(Strategy):
         :return: None
         """
         fav_books = os.listdir(central_dir)
-        fav_filtered_list = list(filter(_is_book, fav_books))
+        fav_filtered_list = list(filter(self.fs_util.is_book, fav_books))
         fav_filtered_list.remove(self.get_static_file_with_red())  # because we list home dir, there will be read.txt
         if len(fav_filtered_list) != 0:
             fav_book_counter = 0
@@ -531,7 +698,7 @@ class ManualStrategy(Strategy):
                             if os.path.exists(book_data.get_save_point_path()):  # Also save bookmarks if exists
                                 self.fs_util.move_fs_entity(book_data.get_save_point_path(),
                                                             dir_name=book_data.get_save_point_name())
-                                Format.prGreen('Save points also saved')
+                                logger.log('Save points also saved')
                             break
                         elif user_input == 'no' or user_input == 'n':
                             self.fs_util.delete_fs_entity(
@@ -542,18 +709,7 @@ class ManualStrategy(Strategy):
                 else:
                     self.fs_util.delete_fs_entity(book_data.get_full_path())
             except Exception as e:
-                Format.prRed(f'Exception while adding new book - {e}')
-
-
-def _is_book(name: str) -> bool:
-    """
-    Function for filtering directory for books
-    :param name: name of the file to proceed
-    :return: bool value, if name ended with 'book' extension.
-    """
-    for ext in __BOOK_EXTENSIONS:
-        if name.endswith(ext):
-            return True
+                logger.log(f'Exception while adding new book - {e}')
 
 
 class Fs_utility:
@@ -566,18 +722,34 @@ class Fs_utility:
         self.file_with_read_book = None
         self.windows_os = 'Windows'
         self.linux_os = 'Linux'
+        self.__BOOK_EXTENSIONS: list[str] = ['txt', 'fb2', 'epub', 'pdf', 'doc', 'docx', 'rtf', 'mobi', 'kf8', 'azw', 'lrf', 'djvu']
+        """
+        Extensions of the books to be located by listing all files in directory.
+        """
 
     def close_read_file(self):
         try:
             self.file_with_read_book.close()
         except Exception as e:
-            Format.prRed(f'Exception occurred while closing file with read books - {e}')
+            logger.log(f'Exception occurred while closing file with read books - {e}')
 
     def open_read_file(self):
         try:
             self.file_with_read_book = open(self.path_to_read_file)
         except Exception as e:
-            Format.prRed(f'Exception occurred while opening file with read books - {e}')
+            logger.log(f'Exception occurred while opening file with read books - {e}')
+
+    def is_book(self, name: str) -> bool:
+        """
+        Function for filtering directory for books
+        :param name: name of the file to proceed
+        :return: bool value, if name ended with 'book' extension.
+        """
+        for ext in self.__BOOK_EXTENSIONS:
+            if name.endswith(ext):
+                return True
+        else:
+            return False
 
     def delete_fs_entity(self, path: str | os.PathLike):
         """
@@ -589,21 +761,21 @@ class Fs_utility:
             if os.path.isfile(path):
                 try:
                     if path.endswith(self.path_to_read_file):
-                        Format.prRed('You cannot delete your read file!')
+                        logger.log('You cannot delete your read file!')
                     else:
                         os.remove(path)
                         Format.prGreen('Book deleted from directory')
                 except Exception as e:
-                    Format.prRed(f'Exception occurred in deleting book in {path} - {e}')
+                    logger.log(f'Exception occurred in deleting book in {path} - {e}')
 
             elif os.path.isdir(path):
                 try:
                     shutil.rmtree(path)
                     Format.prGreen('Directory deleted')
                 except Exception as e:
-                    Format.prRed(f'Exception occurred in deleting directory in {path} - {e}')
+                    logger.log(f'Exception occurred in deleting directory in {path} - {e}')
         else:
-            Format.prRed('Path cannot be None')
+            logger.log('Path cannot be None')
 
     def move_fs_entity(self, path: str | os.PathLike, dir_name: str = ''):
         """
@@ -618,7 +790,7 @@ class Fs_utility:
                     shutil.copy2(path, central_dir)  # {src} {dest}
                     Format.prGreen('Book save in central directory')
                 except Exception as e:
-                    Format.prRed(f'Error occurred while saving book in central dir - {e}')
+                    logger.log(f'Error occurred while saving book in central dir - {e}')
 
             elif os.path.isdir(path):
                 try:
@@ -627,14 +799,14 @@ class Fs_utility:
                     shutil.copytree(path, new_save_point_path, dirs_exist_ok=True)  # {src} {dest}
                     Format.prGreen('Directory save in central directory')
                 except Exception as e:
-                    Format.prRed(f'Error occurred while saving directory in central dir - {e}')
+                    logger.log(f'Error occurred while saving directory in central dir - {e}')
 
             else:
                 Format.prRed('Object type nor file or directory')
                 raise Exception(f'Cannot determine object type of {path}')
             self.delete_fs_entity(path)
         else:
-            Format.prRed('Path cannot be None')
+            logger.log('Path cannot be None')
 
     def creation_date(self, path_to_file):
         """
@@ -656,8 +828,8 @@ class Fs_utility:
 
     def is_need_for_new_line(self) -> bool:
         """
-        Super dummy function
-        :return: bool value if need for new line in read file
+        Super dummy function for checking if you need new line symbol in read file.
+        :return: bool value if you need for new line in read file
         """
         books_counter: int = 0
         new_line_counter: int = 0
@@ -691,10 +863,10 @@ class Fs_utility:
                 with open(FULL_PATH_TO_READ_FILE) as book_file:
                     for book in book_file:
                         if book.find(book_to_find):
-                            Format.prRed('Book found')
+                            Format.prGreen('Book found')
                             break
                         else:
-                            Format.prGreen('Book not found')
+                            Format.prRed('Book not found')
                             break
                     break  # exit loop if book found or not
 
@@ -718,7 +890,132 @@ class Fs_utility:
             print(f'Books count is - {Format.underline_start + str(book_counter) + Format.underline_end}')
 
         else:
-            Format.prRed('Read book file not found!')
+            logger.log('Read book file not found!')
+
+    class App_config:
+        """
+        Class for configuration application with parameters.
+        Simple store variables app configuration.
+        """
+
+        __read_book_file: str
+        """
+        Name of the file with read book.
+        """
+
+        __is_auto_mode: bool
+        """
+        Is auto resolve books.
+        """
+
+        __is_enable_logs: bool
+        """
+        Is logs in application enabled.
+        """
+
+        __exclude_directories: list[str]
+        """
+        Which directories to ignore by app.
+        Contains string objects.
+        """
+
+        def __init__(self, ):
+            self.__read_book_file = ''
+            self.__is_auto_mode = False
+            self.__is_enable_logs = False
+            self.__exclude_directories = list()
+
+        @staticmethod
+        def get_help_config() -> None:
+            print('App config help.')
+            print('Config can contain next parameters:')
+            print('1. read_book_file_name - name of the file with read books,')
+            print('2. is_auto_mode - turn on by default auto mode in application,')
+            print('3. is_enable_logs - turn on of off logs in application,')
+            print('4. exclude_directories - which directories to ignore by book search.')
+            print('How to write config file:')
+            print('Write in config file same lines')
+
+            print('read_book_file_name: <your file name>')
+            print('is_auto_mode: <true or false values>')
+            print('is_enable_logs: <true or false values>')
+            print('exclude_directories: <one_dir_name, second_dir_name, third_dir_name>')
+            while True:
+                print('Would you like to create test config file in this directory - yes (y) or no (n)?')
+                user_input = input(INPUT_SYM)
+                if user_input == 'yes' or user_input == 'y':
+                    Fs_utility.App_config.create_tmp_config()
+                    break
+                else:
+                    break
+
+        def init_config(self, config_file_name: str) -> None:
+            """
+            Initialize app by given config.
+            :param config_file_name: name of the config file to init.
+            :return: None
+            """
+            with open(config_file_name) as file:
+                for line in file:
+                    if ':' in line:
+                        split_line = line.split(':')
+                        if line.startswith('read_book_file_name'):
+                            self.__read_book_file = split_line[1]
+                        elif line.startswith('is_auto_mode'):
+                            self.__is_auto_mode = bool(split_line[1])
+                        elif line.startswith('exclude_directories'):
+                            self.__exclude_directories = list(split_line[1])
+                        else:
+                            raise Exception(f'Wrong config parameter - {line}')
+                    else:
+                        raise Exception(f'Wrong config parameter - {line}')
+                else:
+                    raise Exception('Exception in checking lines')
+
+        def get_read_file_name(self):
+            if self.__read_book_file is not None:
+                return self.__read_book_file
+            else:
+                raise Exception('Try to get null value')
+
+        def get_is_auto_mode(self):
+            if self.__is_auto_mode is not None:
+                return self.__is_auto_mode
+            else:
+                raise Exception('Try to get null value')
+
+        def get_is_enable_log(self):
+            if self.__is_enable_logs is not None:
+                return self.__is_enable_logs
+            else:
+                raise Exception('Try to get null value')
+
+        def get_exclude_dirs(self):
+            if self.__exclude_directories is not None:
+                return self.__exclude_directories
+            else:
+                raise Exception('Try to get null value')
+
+        @staticmethod
+        def create_tmp_config():
+            """
+            Creates config if you cannot do it by yourself.
+            :return: None
+            """
+            try:
+                with open('config', 'w+') as tmp_config:
+                    tmp_config.write('read_book_file_name: read.txt')
+                    tmp_config.write('\n')
+                    tmp_config.write('is_auto_mode: false')
+                    tmp_config.write('\n')
+
+                    tmp_config.write('is_enable_logs: false')
+                    tmp_config.write('\n')
+                    tmp_config.write('exclude_directories: None')
+                    tmp_config.write('\n')
+                logger.log('Config file created successfully')
+            except Exception as e:
+                print(f'Exception in create config file - {e}')
 
 
 ####################Tests
@@ -765,33 +1062,35 @@ class Kindle_history_test:
 
 if __name__ == '__main__':
     cli_args = sys.argv  # get cli arguments
-    if len(cli_args) == 1:
+
+    # Manual or auto branch
+    if len(cli_args) == 1:  # run without arguments
+        del cli_args
+        strat: Strategy | None = None
+        logger = BotLogger(is_on=False)
         Format.prYellow('Auto mode - yes (y) or no (n):')
-        strat = None
         while True:
             mode_user_input = str(input(INPUT_SYM))
             if mode_user_input is not None:
-                match mode_user_input:
-                    case 'yes':  # auto branch
-                        strat = AutoStrategy()
-                        break
-                    case 'y':  # auto branch
-                        strat = AutoStrategy()
-                        break
-                    case 'no':  # manual branch
-                        strat = ManualStrategy()
-                        break
-                    case 'n':  # manual branch
-                        strat = ManualStrategy()
-                        break
-                    case _:
-                        Format.prRed('Wrong choice, try again')
-                        continue
+                if mode_user_input == 'yes' or mode_user_input == 'y':
+                    strat = AutoStrategy()
+                    break
+                elif mode_user_input == 'no' or mode_user_input == 'n':
+                    strat = ManualStrategy()
+                    break
+                else:
+                    Format.prRed('Wrong choice, try again')
+                    continue
             else:
                 Format.prRed('Not received user input')
                 exit(1)
-        strat.do_algorithm()  # execute strategy
-        strat.fs_util.close_read_file()
+        try:
+            strat.do_algorithm()  # execute strategy
+            strat.fs_util.close_read_file()
+        except Exception as e:
+            logger.log(f'Error occurred in main logic start algorithm - {e}')
+
+    # Test branch
     elif len(cli_args) == 2 and cli_args[1] == 'test':  # static name of the test mode
         test_class = Kindle_history_test()
         methods = [name for name, value in
@@ -800,3 +1099,28 @@ if __name__ == '__main__':
 
         for method in methods:
             getattr(test_class, method)
+
+    # Config branch
+    elif len(cli_args) == 2 and cli_args[1] == 'config':
+        cur_dir = os.listdir(Path('.').absolute())
+        config: Fs_utility.App_config | None = None
+        if 'config' in cur_dir:
+            config_num = cur_dir.index('config')
+            config = Fs_utility.App_config()
+            config.init_config(cur_dir[config_num])
+            if config.get_is_enable_log():
+                logger = BotLogger(is_on=True)  # logs appear in console
+            else:
+                logger = BotLogger(is_on=False)  # logs cannot appear in console
+            logger.log('Config file founded')
+            if config.get_is_auto_mode():
+                strat = AutoStrategy()
+            else:
+                strat = ManualStrategy()
+            strat.do_algorithm()  # execute strategy
+            strat.fs_util.close_read_file()
+        else:
+            raise Exception('Wrong config declaration, config not found')
+
+    else:
+        raise Exception('I do not know, how you start app, but exception.')
