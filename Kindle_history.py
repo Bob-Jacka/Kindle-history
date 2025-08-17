@@ -330,10 +330,12 @@ class Strategy(ABC):
             print('1) Go home path')
             print('2) Change file with already read books')
             print('3) Print app help')
-            print('4) Close menu')
+            print('4) Backup books in Download directory')
+            print('5) Reset book data...')
+            print('6) Close menu')
             try:
                 act_num: int = int(input(INPUT_SYM))
-                if act_num in range(1, 5):  # from 1 to 4
+                if act_num in range(1, 7):  # from 1 to 4
                     match act_num:
                         case 1:
                             current_dir = central_dir
@@ -350,6 +352,10 @@ class Strategy(ABC):
                         case 3:
                             self.print_help()
                         case 4:
+                            self.fs_util.do_backup_copy()
+                        case 5:
+                            self.fs_util.reset_data()
+                        case 6:
                             break
                         case _:
                             Format.prRed('Wrong choice')
@@ -364,7 +370,7 @@ class Strategy(ABC):
         :return: help words to poor user
         """
         print('Kindle history app')
-        print(f'App version - {"2.0.0"}')
+        print(f'App version - {"2.0.1"}')
         print('Instruction:')
         print('1) To use this app - place it in directory with books that you already read.')
         print('2) Move to your dir where you want to move your')
@@ -375,7 +381,8 @@ class Strategy(ABC):
         print(f'Home directory - {central_dir},')
         print(f'Current app directory - {current_dir},')
         print(f'File with read books - {book_read_file is not None if 'Book file exist' else 'No path given'},')
-        print(f'File extensions of books - {'txt', 'fb2', 'epub', 'pdf', 'doc', 'docx', 'rtf', 'mobi', 'kf8', 'azw', 'lrf', 'djvu'}')
+        print(
+            f'File extensions of books - {'txt', 'fb2', 'epub', 'pdf', 'doc', 'docx', 'rtf', 'mobi', 'kf8', 'azw', 'lrf', 'djvu'}')
         print('Ways to use this app:')
         print('1. Use with config')
         print('2. Use without config - manually choose auto or manual mode for application work.')
@@ -451,8 +458,8 @@ class AutoStrategy(Strategy):
 
                     self.fs_util.file_with_read_book.write(
                         book_name + ' - ' + str(self.fs_util.creation_date(book.get_full_path())))
-                    self.fs_util.move_fs_entity(book.get_full_path())
-                    self.fs_util.move_fs_entity(book.get_save_point_path(),
+                    self.fs_util.copy_fs_entity(book.get_full_path())
+                    self.fs_util.copy_fs_entity(book.get_save_point_path(),
                                                 dir_name=book.get_save_point_name())
                     logger.log('Save points also saved')
                     self.fs_util.delete_fs_entity(
@@ -694,9 +701,9 @@ class ManualStrategy(Strategy):
                         print('yes (y) / no (n)')  # ask user if user want to save book and save point in book
                         user_input = input(INPUT_SYM)
                         if user_input == 'yes' or user_input == 'y':
-                            self.fs_util.move_fs_entity(book_data.get_full_path())
+                            self.fs_util.copy_fs_entity(book_data.get_full_path())
                             if os.path.exists(book_data.get_save_point_path()):  # Also save bookmarks if exists
-                                self.fs_util.move_fs_entity(book_data.get_save_point_path(),
+                                self.fs_util.copy_fs_entity(book_data.get_save_point_path(),
                                                             dir_name=book_data.get_save_point_name())
                                 logger.log('Save points also saved')
                             break
@@ -714,7 +721,7 @@ class ManualStrategy(Strategy):
 
 class Fs_utility:
     """
-    Class for file systems action
+    Class for file systems actions.
     """
 
     def __init__(self, file_with_read: str | os.PathLike):
@@ -722,7 +729,8 @@ class Fs_utility:
         self.file_with_read_book = None
         self.windows_os = 'Windows'
         self.linux_os = 'Linux'
-        self.__BOOK_EXTENSIONS: list[str] = ['txt', 'fb2', 'epub', 'pdf', 'doc', 'docx', 'rtf', 'mobi', 'kf8', 'azw', 'lrf', 'djvu']
+        self.__BOOK_EXTENSIONS: list[str] = ['txt', 'fb2', 'epub', 'pdf', 'doc', 'docx', 'rtf', 'mobi', 'kf8', 'azw',
+                                             'lrf', 'djvu']
         """
         Extensions of the books to be located by listing all files in directory.
         """
@@ -751,13 +759,69 @@ class Fs_utility:
         else:
             return False
 
-    def delete_fs_entity(self, path: str | os.PathLike):
+    def do_backup_copy(self) -> None:
+        """
+        Function for backup your books in given directory (Download dir).
+        :return: None
+        """
+        logger.log('Backup books invoked')
+        save_path: str | os.PathLike
+        if platform.system() == self.windows_os:
+            save_path = Path.home().as_uri() + os.sep + 'Downloads'
+            logger.log('Windows user path to Downloads')
+        elif platform.system() == self.linux_os:
+            save_path = Path.home().as_uri() + os.sep + 'Downloads'
+            logger.log('Linux user path to Downloads')
+        else:
+            raise Exception('Unknown operating system, not implemented yet.')
+        for dir in os.listdir(central_dir):
+            self.copy_fs_entity(dir, save_path)
+            logger.log(f'File - {dir} backed up in {save_path}')
+
+    def reset_data(self) -> None:
+        """
+        Method for deleting all book data (exclude file with book read).
+        Also home directory of the app will be saved.
+        :return: None
+        """
+        while True:
+            print('Do you really want to delete all books data? yes (y) or no (n)')
+            user_choice = input(INPUT_SYM)
+            if user_choice == 'yes' or user_choice == 'y':
+                logger.log('Reset data is invoked')
+                dir_list = self.get_book_data_dirs_list()
+                for dir in dir_list:
+                    self.delete_fs_entity(dir)
+            elif user_choice == 'no' or user_choice == 'n':
+                logger.log('Reset data canceled')
+            else:
+                print('Wrong choice, try again')
+                continue
+
+    @staticmethod
+    def get_book_data_dirs_list() -> list:
+        """
+        Method for receiving book data (directories names with books, except home directory)
+        :return: list with strings (paths)
+        """
+        lst = os.listdir(Path('..'))  # go back, out of home directory.
+        if central_dir in lst:
+            logger.log('Central dir removed from lst in get book data list')
+            lst.remove(central_dir)
+        else:
+            logger.log('Central dir is not in lst')
+        return lst
+
+    def delete_fs_entity(self, path: str | os.PathLike) -> None:
         """
         Function for deleting book in given path, also can delete directory with save points;
         :param path: path to book
         :return: None
         """
+        logger.log('Delete fs entity invoked')
         if path is not None:
+
+            # file branch
             if os.path.isfile(path):
                 try:
                     if path.endswith(self.path_to_read_file):
@@ -768,23 +832,27 @@ class Fs_utility:
                 except Exception as e:
                     logger.log(f'Exception occurred in deleting book in {path} - {e}')
 
+            # directory branch
             elif os.path.isdir(path):
                 try:
                     shutil.rmtree(path)
-                    Format.prGreen('Directory deleted')
+                    Format.prGreen(f'Directory {path} deleted')
                 except Exception as e:
                     logger.log(f'Exception occurred in deleting directory in {path} - {e}')
         else:
             logger.log('Path cannot be None')
 
-    def move_fs_entity(self, path: str | os.PathLike, dir_name: str = ''):
+    def copy_fs_entity(self, path: str | os.PathLike, dir_name: str = '') -> None:
         """
-        Save your book in central directory (app installation home)
-        :param path: path from where you want to copy read book
+        Save your book in central directory (app installation home).
+        :param path: path from where you want to copy read book.
         :param dir_name: *optional parameter, special for directory copying. Use for creating new directory and copy all into
         :return: None
         """
+        logger.log('Copy fs entity invoked')
         if path is not None:
+
+            # file branch
             if os.path.isfile(path):
                 try:
                     shutil.copy2(path, central_dir)  # {src} {dest}
@@ -792,6 +860,7 @@ class Fs_utility:
                 except Exception as e:
                     logger.log(f'Error occurred while saving book in central dir - {e}')
 
+            # directory branch
             elif os.path.isdir(path):
                 try:
                     new_save_point_path = central_dir + os.sep + dir_name
@@ -808,7 +877,7 @@ class Fs_utility:
         else:
             logger.log('Path cannot be None')
 
-    def creation_date(self, path_to_file):
+    def creation_date(self, path_to_file) -> str:
         """
         Try to get the date that a file was created, falling back to when it was
         last modified if that isn't possible.
@@ -826,7 +895,8 @@ class Fs_utility:
         else:
             raise NotImplemented('It seems that you have Mac operating system, not implemented for this system')
 
-    def is_need_for_new_line(self) -> bool:
+    @staticmethod
+    def is_need_for_new_line() -> bool:
         """
         Super dummy function for checking if you need new line symbol in read file.
         :return: bool value if you need for new line in read file
@@ -851,9 +921,10 @@ class Fs_utility:
         else:
             return False
 
-    def find_book(self):
+    @staticmethod
+    def find_book() -> None:
         """
-        Function for finding book in read file.
+        Function for finding book in read file, by providing book name or name part.
         :return: None
         """
         while True:
@@ -1036,10 +1107,10 @@ class Kindle_history_test:
         self.fs_util.delete_fs_entity('')
 
     def test_move_book(self):
-        self.fs_util.move_fs_entity('')
+        self.fs_util.copy_fs_entity('')
 
     def test_move_directory(self):
-        self.fs_util.move_fs_entity('')
+        self.fs_util.copy_fs_entity('')
 
     def test_format_class1(self):
         Format.prRed('Hello world')
@@ -1058,6 +1129,9 @@ class Kindle_history_test:
 
     def test_init_app(self):
         pass
+
+    def test_fs_get_book_data_dirs(self):
+        print(self.fs_util.get_book_data_dirs_list())
 
 
 if __name__ == '__main__':
