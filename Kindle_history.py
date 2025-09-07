@@ -163,7 +163,7 @@ FULL_PATH_TO_READ_FILE: str
 Alias variable name for central dir + file name with read books
 """
 
-logger: BotLogger
+global_logger: BotLogger
 """
 Global instance of logger class.
 Change logger parameter to turn on logs in console.
@@ -269,13 +269,14 @@ class Strategy(ABC):
     Virtual class for app strategy
     """
 
-    def __init__(self):
+    def __init__(self, local_logger: BotLogger):
         self.__STATIC_FILE_NAME_WITH_READ = 'read.txt'
         """
         Static file name where you store your statistics about books that you already read.
         """
         self.fs_util = Fs_utility(self.get_static_file_with_red())
         self.fs_util.open_read_file()
+        self.local_logger: BotLogger = local_logger
 
     def init_app(self) -> None:
         """
@@ -290,25 +291,25 @@ class Strategy(ABC):
             current_dir = os.getcwd()
             FULL_PATH_TO_READ_FILE = central_dir + os.path.sep + self.__STATIC_FILE_NAME_WITH_READ
             if os.path.exists(FULL_PATH_TO_READ_FILE):
-                logger.log('Read books file found')
+                global_logger.log('Read books file found')
                 book_read_file = os.path.join(central_dir, self.__STATIC_FILE_NAME_WITH_READ)
             else:
-                logger.log('Read books file not found')
+                global_logger.log('Read books file not found')
                 Format.prYellow('Would you like to create file with read books? (yes(y) /no (n))')
                 user_choice = input(INPUT_SYM)
                 if user_choice == 'yes' or user_choice == 'y':
                     os.mknod(central_dir + os.sep + self.get_static_file_with_red())
                     book_read_file = os.path.join(central_dir, self.__STATIC_FILE_NAME_WITH_READ)
-                    logger.log('File for your book history created!')
+                    global_logger.log('File for your book history created!')
                 else:
-                    logger.log('Read file not found and create, app closing')
+                    global_logger.log('Read file not found and create, app closing')
                     exit(1)
-            logger.log('App initialized with paths in manual mode')
+            global_logger.log('App initialized with paths in manual mode')
             if current_dir is None:
-                logger.log('Current directory cannot be None.')
+                global_logger.log('Current directory cannot be None.')
                 raise Exception('Current directory cannot be None.')
         except Exception as e:
-            logger.log(f'Some exception occurred in init app - {e}')
+            global_logger.log(f'Some exception occurred in init app - {e}')
             exit(1)
 
     def get_static_file_with_red(self) -> str:
@@ -317,6 +318,26 @@ class Strategy(ABC):
         :return: str value of file name.
         """
         return self.__STATIC_FILE_NAME_WITH_READ
+
+    def get_local_logger(self):
+        """
+        None safety get local logger method
+        :return: Bot logger entity
+        """
+        if self.local_logger is not None:
+            return self.local_logger
+        else:
+            global_logger.log("Local logger is None")
+
+    def set_local_logger(self, logger: BotLogger):
+        """
+        None safety set local logger method
+        :return: None
+        """
+        if logger is not None:
+            self.local_logger = logger
+        else:
+            global_logger.log("Logger is None")
 
     def app_settings_menu(self) -> None:
         """
@@ -361,7 +382,7 @@ class Strategy(ABC):
                             Format.prRed('Wrong choice')
                             continue
             except Exception as e:
-                logger.log(f'Exception occurred in settings - {e}.')
+                global_logger.log(f'Exception occurred in settings - {e}.')
                 exit(1)
 
     def print_help(self):
@@ -407,11 +428,11 @@ class Strategy(ABC):
 class AutoStrategy(Strategy):
     """
     Derived class from Strategy.
-    Responsible for automation.
+    Responsible for automation of book deletion and saving.
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, local_logger: BotLogger = None):
+        super().__init__(local_logger)
 
     @override
     def do_algorithm(self):
@@ -439,7 +460,7 @@ class AutoStrategy(Strategy):
                             continue
                     print()  # simple space after menu
             except Exception as e:
-                logger.log(f'Exception occurred in Main cycle of the program - {e}')
+                global_logger.log(f'Exception occurred in Main cycle of the program - {e}')
                 exit(1)
 
     @override
@@ -461,14 +482,14 @@ class AutoStrategy(Strategy):
                     self.fs_util.copy_fs_entity(book.get_full_path())
                     self.fs_util.copy_fs_entity(book.get_save_point_path(),
                                                 dir_name=book.get_save_point_name())
-                    logger.log('Save points also saved')
+                    global_logger.log('Save points also saved')
                     self.fs_util.delete_fs_entity(
                         book.get_full_path())  # delete book if you not want to save it
                 else:
                     self.fs_util.delete_fs_entity(book.get_full_path())
 
             except Exception as e:
-                logger.log(f'Exception while adding new book - {e}')
+                global_logger.log(f'Exception while adding new book - {e}')
 
     def __auto_process_books(self, path_to_process='..') -> None:
         """
@@ -479,26 +500,32 @@ class AutoStrategy(Strategy):
         p = Path(path_to_process)  # move out of read directory
         global_dir = p.iterdir()
         dirs_list: list = list()
-        for entry in global_dir:  # add entries if directory. All directories with books
-            if entry.is_dir():
-                dirs_list.append(entry.absolute().__str__())
+        if global_dir is not None:
+            global_logger.log(f"Use path - {global_dir}")
+            for entry in global_dir:  # add entries if directory. All directories with books
+                if entry.is_dir():
+                    dir_entry = entry.absolute().__str__()
+                    dirs_list.append(dir_entry)
+                    global_logger.log(f"Directory added - {dir_entry}")
 
-        for file in dirs_list:  # process directories in global_dir
-            if Path(file).is_dir():
-                for book_file in file:  # process books files in directory
-                    if self.fs_util.is_book(book_file):
-                        logger.log(f'Found book in directory - {book_file}')
-                        book = Book_data(current_dir, book_file)
-                        if book.has_bookmark_dir():
-                            self.add_new_book(book)
+            for file in dirs_list:  # process directories in global_dir
+                if Path(file).is_dir():
+                    for book_file in file:  # process books files in directory
+                        if self.fs_util.is_book(book_file):
+                            global_logger.log(f'Found book in directory - {book_file}')
+                            book = Book_data(current_dir, book_file)
+                            if book.has_bookmark_dir():
+                                self.add_new_book(book)
+                            else:
+                                global_logger.log('Book add cancel, no bookmark dir found')
                         else:
-                            logger.log('Book add cancel, no bookmark dir found')
-                    else:
-                        pass
+                            pass
+                else:
+                    global_logger.log('Path is a file')
             else:
-                logger.log('Path is a file')
+                pass
         else:
-            pass
+            global_logger.log("Global directory is None")
 
 
 class ManualStrategy(Strategy):
@@ -507,8 +534,8 @@ class ManualStrategy(Strategy):
     Responsible for manual mode of the app.
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, local_logger: BotLogger = None):
+        super().__init__(local_logger)
 
     @override
     def do_algorithm(self):
@@ -542,7 +569,7 @@ class ManualStrategy(Strategy):
                             continue
                     print()  # simple space after menu
             except Exception as e:
-                logger.log(f'Exception occurred in Main cycle of the program - {e}')
+                global_logger.log(f'Exception occurred in Main cycle of the program - {e}')
                 exit(1)
 
     def __move_menu(self):
@@ -579,7 +606,7 @@ class ManualStrategy(Strategy):
                             continue
                     print()
             except Exception as e:
-                logger.log(f'Exception occurred in settings - {e}.')
+                global_logger.log(f'Exception occurred in settings - {e}.')
                 exit(1)
 
     def move_upper(self):
@@ -617,7 +644,7 @@ class ManualStrategy(Strategy):
                     current_dir = dir_list[dir_number].as_posix()
                     break
                 elif dir_number == int(CLOSE_MENU_CODE):
-                    logger.log('Close menu')
+                    global_logger.log('Close menu')
                     break
 
     def __list_all_read_book(self, path: str | os.PathLike):
@@ -659,7 +686,7 @@ class ManualStrategy(Strategy):
                         Format.prYellow('Close menu')
                         break
         else:
-            logger.log('Path cannot be null')
+            global_logger.log('Path cannot be null')
 
     def __list_favourite_books(self):
         """
@@ -705,7 +732,7 @@ class ManualStrategy(Strategy):
                             if os.path.exists(book_data.get_save_point_path()):  # Also save bookmarks if exists
                                 self.fs_util.copy_fs_entity(book_data.get_save_point_path(),
                                                             dir_name=book_data.get_save_point_name())
-                                logger.log('Save points also saved')
+                                global_logger.log('Save points also saved')
                             break
                         elif user_input == 'no' or user_input == 'n':
                             self.fs_util.delete_fs_entity(
@@ -716,7 +743,7 @@ class ManualStrategy(Strategy):
                 else:
                     self.fs_util.delete_fs_entity(book_data.get_full_path())
             except Exception as e:
-                logger.log(f'Exception while adding new book - {e}')
+                global_logger.log(f'Exception while adding new book - {e}')
 
 
 class Fs_utility:
@@ -739,13 +766,13 @@ class Fs_utility:
         try:
             self.file_with_read_book.close()
         except Exception as e:
-            logger.log(f'Exception occurred while closing file with read books - {e}')
+            global_logger.log(f'Exception occurred while closing file with read books - {e}')
 
     def open_read_file(self):
         try:
             self.file_with_read_book = open(self.path_to_read_file)
         except Exception as e:
-            logger.log(f'Exception occurred while opening file with read books - {e}')
+            global_logger.log(f'Exception occurred while opening file with read books - {e}')
 
     def is_book(self, name: str) -> bool:
         """
@@ -764,19 +791,19 @@ class Fs_utility:
         Function for backup your books in given directory (Download dir).
         :return: None
         """
-        logger.log('Backup books invoked')
+        global_logger.log('Backup books invoked')
         save_path: str | os.PathLike
         if platform.system() == self.windows_os:
             save_path = Path.home().as_uri() + os.sep + 'Downloads'
-            logger.log('Windows user path to Downloads')
+            global_logger.log('Windows user path to Downloads')
         elif platform.system() == self.linux_os:
             save_path = Path.home().as_uri() + os.sep + 'Downloads'
-            logger.log('Linux user path to Downloads')
+            global_logger.log('Linux user path to Downloads')
         else:
             raise Exception('Unknown operating system, not implemented yet.')
         for dir in os.listdir(central_dir):
             self.copy_fs_entity(dir, save_path)
-            logger.log(f'File - {dir} backed up in {save_path}')
+            global_logger.log(f'File - {dir} backed up in {save_path}')
 
     def reset_data(self) -> None:
         """
@@ -788,12 +815,12 @@ class Fs_utility:
             print('Do you really want to delete all books data? yes (y) or no (n)')
             user_choice = input(INPUT_SYM)
             if user_choice == 'yes' or user_choice == 'y':
-                logger.log('Reset data is invoked')
+                global_logger.log('Reset data is invoked')
                 dir_list = self.get_book_data_dirs_list()
                 for dir in dir_list:
                     self.delete_fs_entity(dir)
             elif user_choice == 'no' or user_choice == 'n':
-                logger.log('Reset data canceled')
+                global_logger.log('Reset data canceled')
             else:
                 print('Wrong choice, try again')
                 continue
@@ -806,10 +833,10 @@ class Fs_utility:
         """
         lst = os.listdir(Path('..'))  # go back, out of home directory.
         if central_dir in lst:
-            logger.log('Central dir removed from lst in get book data list')
+            global_logger.log('Central dir removed from lst in get book data list')
             lst.remove(central_dir)
         else:
-            logger.log('Central dir is not in lst')
+            global_logger.log('Central dir is not in lst')
         return lst
 
     def delete_fs_entity(self, path: str | os.PathLike) -> None:
@@ -818,19 +845,19 @@ class Fs_utility:
         :param path: path to book
         :return: None
         """
-        logger.log('Delete fs entity invoked')
+        global_logger.log('Delete fs entity invoked')
         if path is not None:
 
             # file branch
             if os.path.isfile(path):
                 try:
                     if path.endswith(self.path_to_read_file):
-                        logger.log('You cannot delete your read file!')
+                        global_logger.log('You cannot delete your read file!')
                     else:
                         os.remove(path)
                         Format.prGreen('Book deleted from directory')
                 except Exception as e:
-                    logger.log(f'Exception occurred in deleting book in {path} - {e}')
+                    global_logger.log(f'Exception occurred in deleting book in {path} - {e}')
 
             # directory branch
             elif os.path.isdir(path):
@@ -838,9 +865,9 @@ class Fs_utility:
                     shutil.rmtree(path)
                     Format.prGreen(f'Directory {path} deleted')
                 except Exception as e:
-                    logger.log(f'Exception occurred in deleting directory in {path} - {e}')
+                    global_logger.log(f'Exception occurred in deleting directory in {path} - {e}')
         else:
-            logger.log('Path cannot be None')
+            global_logger.log('Path cannot be None')
 
     def copy_fs_entity(self, path: str | os.PathLike, dir_name: str = '') -> None:
         """
@@ -849,7 +876,7 @@ class Fs_utility:
         :param dir_name: *optional parameter, special for directory copying. Use for creating new directory and copy all into
         :return: None
         """
-        logger.log('Copy fs entity invoked')
+        global_logger.log('Copy fs entity invoked')
         if path is not None:
 
             # file branch
@@ -858,7 +885,7 @@ class Fs_utility:
                     shutil.copy2(path, central_dir)  # {src} {dest}
                     Format.prGreen('Book save in central directory')
                 except Exception as e:
-                    logger.log(f'Error occurred while saving book in central dir - {e}')
+                    global_logger.log(f'Error occurred while saving book in central dir - {e}')
 
             # directory branch
             elif os.path.isdir(path):
@@ -868,14 +895,14 @@ class Fs_utility:
                     shutil.copytree(path, new_save_point_path, dirs_exist_ok=True)  # {src} {dest}
                     Format.prGreen('Directory save in central directory')
                 except Exception as e:
-                    logger.log(f'Error occurred while saving directory in central dir - {e}')
+                    global_logger.log(f'Error occurred while saving directory in central dir - {e}')
 
             else:
                 Format.prRed('Object type nor file or directory')
                 raise Exception(f'Cannot determine object type of {path}')
             self.delete_fs_entity(path)
         else:
-            logger.log('Path cannot be None')
+            global_logger.log('Path cannot be None')
 
     def creation_date(self, path_to_file) -> str:
         """
@@ -961,7 +988,7 @@ class Fs_utility:
             print(f'Books count is - {Format.underline_start + str(book_counter) + Format.underline_end}')
 
         else:
-            logger.log('Read book file not found!')
+            global_logger.log('Read book file not found!')
 
     class App_config:
         """
@@ -1055,7 +1082,11 @@ class Fs_utility:
             else:
                 raise Exception('Try to get null value')
 
-        def get_is_enable_log(self):
+        def get_is_global_enable_log(self):
+            """
+            Return bool value is global logs enabled
+            :return:
+            """
             if self.__is_enable_logs is not None:
                 return self.__is_enable_logs
             else:
@@ -1084,7 +1115,7 @@ class Fs_utility:
                     tmp_config.write('\n')
                     tmp_config.write('exclude_directories: None')
                     tmp_config.write('\n')
-                logger.log('Config file created successfully')
+                global_logger.log('Config file created successfully')
             except Exception as e:
                 print(f'Exception in create config file - {e}')
 
@@ -1141,7 +1172,7 @@ if __name__ == '__main__':
     if len(cli_args) == 1:  # run without arguments
         del cli_args
         strat: Strategy | None = None
-        logger = BotLogger(is_on=False)
+        global_logger = BotLogger(is_on=False)
         Format.prYellow('Auto mode - yes (y) or no (n):')
         while True:
             mode_user_input = str(input(INPUT_SYM))
@@ -1162,7 +1193,7 @@ if __name__ == '__main__':
             strat.do_algorithm()  # execute strategy
             strat.fs_util.close_read_file()
         except Exception as e:
-            logger.log(f'Error occurred in main logic start algorithm - {e}')
+            global_logger.log(f'Error occurred in main logic start algorithm - {e}')
 
     # Test branch
     elif len(cli_args) == 2 and cli_args[1] == 'test':  # static name of the test mode
@@ -1175,18 +1206,18 @@ if __name__ == '__main__':
             getattr(test_class, method)
 
     # Config branch
-    elif len(cli_args) == 2 and cli_args[1] == 'config':
+    elif len(cli_args) == 2 and cli_args[1].startswith('--config'):  # check for config flag
         cur_dir = os.listdir(Path('.').absolute())
         config: Fs_utility.App_config | None = None
         if 'config' in cur_dir:
             config_num = cur_dir.index('config')
             config = Fs_utility.App_config()
             config.init_config(cur_dir[config_num])
-            if config.get_is_enable_log():
-                logger = BotLogger(is_on=True)  # logs appear in console
+            if config.get_is_global_enable_log():
+                global_logger = BotLogger(is_on=True)  # logs appear in console
             else:
-                logger = BotLogger(is_on=False)  # logs cannot appear in console
-            logger.log('Config file founded')
+                global_logger = BotLogger(is_on=False)  # logs cannot appear in console
+            global_logger.log('Config file founded')
             if config.get_is_auto_mode():
                 strat = AutoStrategy()
             else:
