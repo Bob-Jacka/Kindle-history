@@ -350,13 +350,14 @@ class Strategy(ABC):
             Format.prYellow('Available actions in app settings:')
             print('1) Go home path')
             print('2) Change file with already read books')
-            print('3) Print app help')
-            print('4) Backup books in Download directory')
-            print('5) Reset book data...')
-            print('6) Close menu')
+            print('3) Count books in read file')
+            print('4) Print app help')
+            print('5) Backup books in Download directory')
+            print('6) Reset book data...')
+            print('7) Close menu')
             try:
                 act_num: int = int(input(INPUT_SYM))
-                if act_num in range(1, 7):  # from 1 to 4
+                if act_num in range(1, 8):  # from 1 to 4
                     match act_num:
                         case 1:
                             current_dir = central_dir
@@ -371,12 +372,14 @@ class Strategy(ABC):
                                 Format.prRed('Wrong new name or empty, try again')
                                 continue
                         case 3:
-                            self.print_help()
+                            self.fs_util.count_books()
                         case 4:
-                            self.fs_util.do_backup_copy()
+                            self.print_help()
                         case 5:
-                            self.fs_util.reset_data()
+                            self.fs_util.do_backup_copy()
                         case 6:
+                            self.fs_util.reset_data()
+                        case 7:
                             break
                         case _:
                             Format.prRed('Wrong choice')
@@ -391,7 +394,7 @@ class Strategy(ABC):
         :return: help words to poor user
         """
         print('Kindle history app')
-        print(f'App version - {"2.0.1"}')
+        print(f'App version - {"2.0.2"}')
         print('Instruction:')
         print('1) To use this app - place it in directory with books that you already read.')
         print('2) Move to your dir where you want to move your')
@@ -436,6 +439,10 @@ class AutoStrategy(Strategy):
 
     @override
     def do_algorithm(self):
+        """
+        Main cycle of auto strategy
+        :return: None
+        """
         self.init_app()
         while True:
             print(f'Your current path is - "{Format.underline_start + current_dir + Format.underline_end}"')
@@ -446,7 +453,7 @@ class AutoStrategy(Strategy):
             Format.prYellow('Choose action by entering number')
             try:
                 act_num: int = int(input(INPUT_SYM))
-                if act_num in range(1, 4):  # from 1 to 4
+                if act_num in range(1, 4):  # from 1 to 3 (not 4)
                     match act_num:
                         case 1:
                             self.__auto_process_books()
@@ -520,8 +527,11 @@ class AutoStrategy(Strategy):
                                 global_logger.log('Book add cancel, no bookmark dir found')
                         else:
                             pass
-                else:
+                elif Path(file).is_file():
                     global_logger.log('Path is a file')
+                else:
+                    global_logger.log("Unknown filesystem entity")
+                    raise Exception("Unknown filesystem entity: neither a file, nor a directory")
             else:
                 pass
         else:
@@ -539,6 +549,10 @@ class ManualStrategy(Strategy):
 
     @override
     def do_algorithm(self):
+        """
+        Main cycle of manual strategy
+        :return: None
+        """
         self.init_app()
         while True:
             print(f'Your current path is - "{Format.underline_start + current_dir + Format.underline_end}"')
@@ -551,12 +565,12 @@ class ManualStrategy(Strategy):
             Format.prYellow('Choose action by entering number')
             try:
                 act_num: int = int(input(INPUT_SYM))
-                if act_num in range(1, 6):  # from 1 to 6
+                if act_num in range(1, 6):  # from 1 to 5 (not 6)
                     match act_num:
                         case 1:
                             self.__move_menu()
                         case 2:
-                            self.app_settings_menu()
+                            self.app_settings_menu()  # derived from Strategy
                         case 3:
                             self.__list_all_read_book(current_dir)
                         case 4:
@@ -582,12 +596,11 @@ class ManualStrategy(Strategy):
             Format.prYellow('Available actions in app settings:')
             print('1) Move upper')
             print('2) Move lower')
-            print('3) Count books')
-            print('4) Find book')
-            print('5) Close menu')
+            print('3) Find book')
+            print('4) Close menu')
             try:
                 act_num: int = int(input(INPUT_SYM))
-                if act_num in range(1, 6):  # from 1 to 5
+                if act_num in range(1, 5):  # from 1 to 5
                     match act_num:
                         case 1:
                             self.move_upper()
@@ -596,10 +609,8 @@ class ManualStrategy(Strategy):
                             self.move_lower()
                             break
                         case 3:
-                            self.fs_util.count_books()
-                        case 4:
                             self.fs_util.find_book()
-                        case 5:
+                        case 4:
                             break
                         case _:
                             Format.prRed('Wrong choice, try again')
@@ -609,7 +620,8 @@ class ManualStrategy(Strategy):
                 global_logger.log(f'Exception occurred in settings - {e}.')
                 exit(1)
 
-    def move_upper(self):
+    @staticmethod
+    def move_upper():
         """
         Move upper in file system tree
         :return: None
@@ -617,7 +629,8 @@ class ManualStrategy(Strategy):
         global current_dir
         current_dir = Path(current_dir).parent
 
-    def move_lower(self):
+    @staticmethod
+    def move_lower():
         """
         Move lower in file system tree
         :return: None
@@ -801,6 +814,7 @@ class Fs_utility:
             global_logger.log('Linux user path to Downloads')
         else:
             raise Exception('Unknown operating system, not implemented yet.')
+
         for dir in os.listdir(central_dir):
             self.copy_fs_entity(dir, save_path)
             global_logger.log(f'File - {dir} backed up in {save_path}')
@@ -904,7 +918,7 @@ class Fs_utility:
         else:
             global_logger.log('Path cannot be None')
 
-    def creation_date(self, path_to_file) -> str:
+    def creation_date(self, path_to_file: str | os.PathLike) -> str:
         """
         Try to get the date that a file was created, falling back to when it was
         last modified if that isn't possible.
