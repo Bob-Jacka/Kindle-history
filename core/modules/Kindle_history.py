@@ -1,12 +1,17 @@
 """
-Kindle history
+Kindle history module
 Store your read books in file or delete already read book from your e-book, like Kindle
 
-Utility gives you an interactive way of using your e-book
+Module gives you an interactive way of using your e-book
 """
-from enum import Enum
 
 try:
+    from core.entities.BotLogger import BotLogger
+    from core.entities.Formatter import Format
+    from enum import Enum
+
+    from core.entities.AbstractModule import Module, INPUT_SYM, CLOSE_MENU_CODE
+
     import datetime
     import inspect
     import os
@@ -26,121 +31,7 @@ try:
 except Exception as e:
     print(f'An exception occurred during dependencies import - {e}')
 
-####################Logger
-"""
-File with custom logger class for your small console app
-"""
-
-import logging
-
-
-class BotLogger:
-    """
-    Custom logger class for telegram bot / Locust test and С+ web doc, and now for C+ dependencies manager.
-    """
-
-    __log_file: TextIO  # file for logs
-    __logger: logging.Logger  # private instance of composite logger
-    __is_file_write: bool  # is need write to file
-    __is_logging: bool  # do you need logging or not
-    __log_file_name: str  # name of the log file
-
-    def __init__(self, name: str = 'simple_logger', is_file_write: bool = False, is_on: bool = True):
-        self.__logger = logging.getLogger(name)
-        self.__is_logging = is_on
-        if is_file_write:
-            self.__is_file_write = True
-            self.__get_log_file()
-        else:
-            self.__is_file_write = False
-
-    def log(self, msg: str, level: int = 1, stacklevel: int = 1, color: str = '\033[97m'):
-        """
-        Method for writing logs into console or text file.
-        :param msg: message to be written.
-        :param level: level of logging, 1 by default.
-        :param stacklevel: level of the stack.
-        :param color: color of the log message in ANSI format.
-        :return: None
-        """
-        try:
-            if self.__is_logging:
-                formated_msg = f"{(datetime.datetime.now())}: '{msg}'."
-                colored_formated_msg = color + formated_msg + '\033[00m'
-                if self.__is_file_write:
-                    self.__log_file.write(formated_msg)
-                    self.__logger.log(msg=colored_formated_msg, stacklevel=stacklevel, level=level)
-                    print(colored_formated_msg)
-                else:
-                    self.__logger.log(msg=colored_formated_msg, stacklevel=stacklevel, level=level)
-                    print(colored_formated_msg)
-            else:
-                pass  # simple pass instruction for pass if you do not want logging in your small console app
-        except Exception as e:
-            print(f"Error occurred while writing log file - {e}")
-
-    def __get_log_file(self):
-        """
-        Creates log file for bot actions
-        :return: None
-        """
-        try:
-            self.__log_file = open(self.__log_file_name)
-        except Exception as e:
-            print(f"{(datetime.datetime.now())}: Exception occurred in logger - {e}.")
-            self.__log_file.close()
-
-    def is_log_file_opened(self) -> bool:
-        return self.__log_file is not None and self.__is_file_write
-
-    def __close_log_file(self):
-        """
-        Closes log file
-        :return: None
-        """
-        try:
-            self.__log_file.close()
-        except Exception as e:
-            print(f"{(datetime.datetime.now())}: Error in closing log file - {e}.")
-
-    def is_file_write(self):
-        """
-        Method for is writing info
-        :return: bool value
-        """
-        return self.__is_file_write
-
-    def get_log_file(self):
-        """
-        Method for getting log file descriptor
-        :return:
-        """
-        return self.__log_file
-
-    def set_log_file_name(self, log_file_name: str):
-        """
-        Setter method for logger file name
-        :return: None
-        """
-        if log_file_name is not None:
-            self.__log_file_name = log_file_name
-        else:
-            print('Log file name cannot be None')
-
-
 ###########Main logic of the app
-
-# App settings:
-
-CLOSE_MENU_CODE: Final[str] = '666'
-"""
-Code for close menu functionality
-"""
-
-INPUT_SYM: Final[str] = '>> '
-"""
-Symbol that applies in input fields
-"""
 
 # App paths:
 central_dir: str
@@ -174,35 +65,6 @@ Global instance of logger class.
 Change logger parameter to turn on logs in console.
 Logger creates in different branches of app execution.
 """
-
-
-class Format:
-    """
-    Utility class for text formater
-    Includes print functions in different colors and underline technology.
-    """
-    underline_end: Final[str] = '\033[0m'
-    underline_start: Final[str] = '\033[4m'
-
-    @staticmethod
-    def prRed(string: str):
-        print("\033[91m {}\033[00m".format(string))
-
-    @staticmethod
-    def prGreen(string: str):
-        print("\033[92m {}\033[00m".format(string))
-
-    @staticmethod
-    def prYellow(string: str):
-        print("\033[93m {}\033[00m".format(string))
-
-    @staticmethod
-    def prCyan(string: str):
-        print("\033[96m {}\033[00m".format(string))
-
-    @staticmethod
-    def prLightGray(string: str):
-        print("\033[97m {}\033[00m".format(string))
 
 
 class Book_data:
@@ -285,9 +147,11 @@ class Book_data:
                     raise Exception('Sdr directory is corrupted')
             with open(lua_file) as lua_script:
                 all_file: list[str] = lua_script.readlines()
+                # get percent of finished book
                 percent_match = re.search(r'percent_finished\s*=\s*([\d.]+)', all_file)
                 percent_finished: float = float(percent_match.group(1)) if percent_match else None
 
+                # get status parameter
                 status_match = re.search(r'status\s*=\s*["\']([^"\']+)["\']', all_file)
                 status: str = status_match.group(1) if status_match else None
 
@@ -342,7 +206,7 @@ class Strategy(ABC):
     """
 
     def __init__(self, local_logger: BotLogger):
-        self.__STATIC_FILE_NAME_WITH_READ: Final[str] = 'read.txt'
+        self.__STATIC_FILE_NAME_WITH_READ: Final[str] = '../../data/read.txt'
         """
         Static file name where you store your statistics about books that you already read.
         """
@@ -466,7 +330,6 @@ class Strategy(ABC):
         :return: help words to poor user
         """
         print('Kindle history app')
-        print(f'App version - {"2.0.3"}')
         print('Instruction:')
         print('1) To use this app - place it in directory with books that you already read.')
         print('2) Move to your dir where you want to move your')
@@ -597,7 +460,7 @@ class AutoStrategy(Strategy):
             for dir_name in dirs_list:  # process directories in global_dir
                 for book_file in dir_name:  # process books files in directory
                     if self.fs_util.is_book(book_file):
-                        global_logger.log(f'Found book in directory - {book_file}')
+                        global_logger.log(f'Found book file ({book_file}) in directory ({dir_name})')
                         book = Book_data(current_dir, book_file)
                         if book.has_bookmark_dir():
                             global_logger.log(f'Found bookmark directory, decide to add book - {book.get_book_name()}')
@@ -605,7 +468,8 @@ class AutoStrategy(Strategy):
                                 global_logger.log('Book really finished')
                                 self.add_new_book(book)
                             else:
-                                global_logger.log(f'Book is not finished truly, go read it - {book.get_book_name()}')
+                                global_logger.log(
+                                    f'Book is not finished truly, go read it or change book status to finished - {book.get_book_name()}')
                                 del book
                         else:
                             global_logger.log('Book add cancel, no bookmark dir found')
@@ -715,7 +579,7 @@ class ManualStrategy(Strategy):
         :return: None
         """
         global current_dir
-        p = Path('.')  # check current directory
+        p = Path('../..')  # check current directory
         dir_list = [x for x in p.iterdir() if x.is_dir()]
         Format.prGreen('Available directories:')
         if len(dir_list) == 0:
@@ -941,7 +805,7 @@ class Fs_utility:
         Method for receiving book data (directories names with books, except home directory)
         :return: list with strings (paths)
         """
-        lst = os.listdir(Path('..'))  # go back, out of home directory.
+        lst = os.listdir(Path('../../..'))  # go back, out of home directory.
         if central_dir in lst:
             global_logger.log('Central dir removed from lst in get book data list')
             lst.remove(central_dir)
@@ -1277,69 +1141,75 @@ class Kindle_history_test:
         print(self.fs_util.get_book_data_dirs_list())
 
 
-if __name__ == '__main__':
-    cli_args = sys.argv  # get cli arguments
+class Kindle_history(Module):
 
-    # Manual or auto branch to execute:
-    if len(cli_args) == 1:  # run without arguments
-        del cli_args
-        strat: Strategy | None = None
-        global_logger = BotLogger(is_on=False)
-        Format.prYellow('Auto mode - yes (y) or no (n):')
-        while True:
-            mode_user_input = str(input(INPUT_SYM))
-            if mode_user_input is not None:
-                if mode_user_input == 'yes' or mode_user_input == 'y':
-                    strat = AutoStrategy()
-                    break
-                elif mode_user_input == 'no' or mode_user_input == 'n':
-                    strat = ManualStrategy()
-                    break
+    def run_module(self):
+        """
+        Run kindle history module
+        :return: None
+        """
+        cli_args = sys.argv  # get cli arguments
+
+        # Manual or auto branch to execute:
+        if len(cli_args) == 1:  # run without arguments
+            del cli_args
+            strat: Strategy | None = None
+            global_logger = BotLogger(is_on=False)
+            Format.prYellow('Auto mode - yes (y) or no (n):')
+            while True:
+                mode_user_input = str(input(INPUT_SYM))
+                if mode_user_input is not None:
+                    if mode_user_input == 'yes' or mode_user_input == 'y':
+                        strat = AutoStrategy()
+                        break
+                    elif mode_user_input == 'no' or mode_user_input == 'n':
+                        strat = ManualStrategy()
+                        break
+                    else:
+                        Format.prRed('Wrong choice, try again')
+                        continue
                 else:
-                    Format.prRed('Wrong choice, try again')
-                    continue
-            else:
-                Format.prRed('Not received user input')
-                exit(1)
-        try:
-            strat.do_algorithm()  # execute strategy
-            strat.fs_util.close_read_file()
-        except Exception as e:
-            global_logger.log(f'Error occurred in main logic start algorithm - {e}')
+                    Format.prRed('Not received user input')
+                    exit(1)
+            try:
+                strat.do_algorithm()  # execute strategy
+                strat.fs_util.close_read_file()
+            except Exception as e:
+                global_logger.log(f'Error occurred in main logic start algorithm - {e}')
 
-    # Test branch to execute:
-    elif len(cli_args) == 2 and cli_args[1] == 'test':  # static name of the test mode
-        test_class = Kindle_history_test()
-        methods = [name for name, value in
-                   inspect.getmembers(Kindle_history_test, inspect.isfunction) if
-                   name != '__init__']  # turn on test mode
+        # Test branch to execute:
+        elif len(cli_args) == 2 and cli_args[1] == 'test':  # static name of the test mode
+            test_class = Kindle_history_test()
+            methods = [name for name, value in
+                       inspect.getmembers(Kindle_history_test, inspect.isfunction) if
+                       name != '__init__']  # turn on test mode
 
-        for method in methods:
-            getattr(test_class, method)
+            for method in methods:
+                getattr(test_class, method)
 
-    # Config branch to execute:
-    elif len(cli_args) == 2 and cli_args[1].startswith('--config'):  # check for config flag
-        cur_dir = os.listdir(Path('.').absolute())
-        config: Fs_utility.App_config | None = None
-        if Fs_utility.config_name in cur_dir:
-            config_num = cur_dir.index('config')
-            config = Fs_utility.App_config()
-            config.init_config(cur_dir[config_num])
-            if config.get_is_global_enable_log():
-                global_logger = BotLogger(is_on=True)  # logs appear in console
+        # Config branch to execute:
+        elif len(cli_args) == 2 and cli_args[1].startswith(f'--{Fs_utility.config_name}'):  # check for config flag
+            cur_dir = os.listdir(Path('../..').absolute())
+            config: Fs_utility.App_config | None = None
+            if Fs_utility.config_name in cur_dir:
+                config_num = cur_dir.index(Fs_utility.config_name)
+                config = Fs_utility.App_config()
+                config.init_config(cur_dir[config_num])
+                if config.get_is_global_enable_log():
+                    global_logger = BotLogger(is_on=True)  # logs appear in console
+                else:
+                    global_logger = BotLogger(is_on=False)  # logs cannot appear in console
+                global_logger.log('Config file founded')
+                if config.get_is_auto_mode():
+                    strat = AutoStrategy()
+                else:
+                    strat = ManualStrategy()
+                strat.do_algorithm()  # execute strategy
+                strat.fs_util.close_read_file()
             else:
-                global_logger = BotLogger(is_on=False)  # logs cannot appear in console
-            global_logger.log('Config file founded')
-            if config.get_is_auto_mode():
-                strat = AutoStrategy()
-            else:
-                strat = ManualStrategy()
-            strat.do_algorithm()  # execute strategy
-            strat.fs_util.close_read_file()
+                raise Exception('Wrong config declaration, config not found')
+
         else:
-            raise Exception('Wrong config declaration, config not found')
+            raise Exception('I do not know, how you start app, but exception.')
 
-    else:
-        raise Exception('I do not know, how you start app, but exception.')
-
-    print('Bye')
+        print('Bye')

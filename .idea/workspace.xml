@@ -1,20 +1,47 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
   <component name="ChangeListManager">
-    <list default="true" id="8d57a2cc-addd-4314-be2e-33c7d5efcc06" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+    <list default="true" id="8d57a2cc-addd-4314-be2e-33c7d5efcc06" name="Changes" comment="update auto strategy">
+      <change afterPath="$PROJECT_DIR$/core/entities/AbstractModule.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/core/entities/BotLogger.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/core/entities/DistributionManager.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/core/entities/Formatter.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/core/entities/Translation.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/core/modules/Transfer_book.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/core/other/TODO" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Kindle_history.py" beforeDir="false" afterPath="$PROJECT_DIR$/core/modules/Kindle_history.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TODO" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Факт что книга прочитанная.png" beforeDir="false" afterPath="$PROJECT_DIR$/core/other/Факт что книга прочитанная.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/старт.png" beforeDir="false" afterPath="$PROJECT_DIR$/core/other/старт.png" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
   <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="main" />
+      </map>
+    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 2
-}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 2
+}</component>
   <component name="ProjectId" id="2zSCmiOdcq0yiw8XPB5GX0QhfmO" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectViewState">
@@ -23,12 +50,52 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
+    "Python.DistributionManager.executor": "Run",
+    "Python.Kindle_history.executor": "Run",
+    "Python.main.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "main"
+    "git-widget-placeholder": "main",
+    "last_opened_file_path": "/home/kirill/PycharmProjects/KindleHistory",
+    "settings.editor.selected.configurable": "project.propDebugger"
   }
 }]]></component>
-  <component name="RunManager">
-    <configuration name="main" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$" />
+      <recent name="$PROJECT_DIR$/test_dir" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/core/other" />
+      <recent name="$PROJECT_DIR$/core/entities" />
+      <recent name="$PROJECT_DIR$/core/modules" />
+      <recent name="$PROJECT_DIR$/data" />
+      <recent name="$PROJECT_DIR$/test_dir" />
+    </key>
+  </component>
+  <component name="RunManager" selected="Python.DistributionManager">
+    <configuration name="DistributionManager" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="KindleHistory" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/core/entities" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/core/entities/DistributionManager.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="Kindle_history" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
       <module name="KindleHistory" />
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -41,7 +108,7 @@
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/main.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/core/modules/Kindle_history.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -50,6 +117,11 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Python.DistributionManager" />
+      </list>
+    </recent_temporary>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
@@ -60,17 +132,129 @@
       <option name="presentableId" value="Default" />
       <updated>1751715247231</updated>
     </task>
+    <task id="LOCAL-00001" summary="update app, add settings menu">
+      <option name="closed" value="true" />
+      <created>1752933684946</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1752933684946</updated>
+    </task>
+    <task id="LOCAL-00002" summary="update version, apply last commit">
+      <option name="closed" value="true" />
+      <created>1752935006972</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1752935006972</updated>
+    </task>
+    <task id="LOCAL-00003" summary="fix some bugs in app">
+      <option name="closed" value="true" />
+      <created>1752935662738</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1752935662738</updated>
+    </task>
+    <task id="LOCAL-00004" summary="version 1.3.0, add test class and add new features">
+      <option name="closed" value="true" />
+      <created>1753022799916</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1753022799916</updated>
+    </task>
+    <task id="LOCAL-00005" summary="version 1.4.0 add find books functionality">
+      <option name="closed" value="true" />
+      <created>1753541354867</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1753541354867</updated>
+    </task>
+    <task id="LOCAL-00006" summary="version 1.5.0 - add readme and started proceed save points of the book, but not finished this task">
+      <option name="closed" value="true" />
+      <created>1753625657598</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1753625657598</updated>
+    </task>
+    <task id="LOCAL-00007" summary="version 1.6.0 - add save for bookmarks, add tests, add abstraction class for book information">
+      <option name="closed" value="true" />
+      <created>1754227649639</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1754227649639</updated>
+    </task>
+    <task id="LOCAL-00008" summary="Not new version, just update">
+      <option name="closed" value="true" />
+      <created>1754838087126</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1754838087126</updated>
+    </task>
+    <task id="LOCAL-00009" summary="Not tested version of App, but add backup and reset functionality">
+      <option name="closed" value="true" />
+      <created>1755434320524</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1755434320524</updated>
+    </task>
+    <task id="LOCAL-00010" summary="Refactor app logic">
+      <option name="closed" value="true" />
+      <created>1757254037583</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1757254037583</updated>
+    </task>
+    <task id="LOCAL-00011" summary="minor fix">
+      <option name="closed" value="true" />
+      <created>1757862501372</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1757862501372</updated>
+    </task>
+    <task id="LOCAL-00012" summary="update auto strategy">
+      <option name="closed" value="true" />
+      <created>1760276925602</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1760276925602</updated>
+    </task>
+    <option name="localTasksCounter" value="13" />
     <servers />
   </component>
-  <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/main.py</url>
-          <line>8</line>
-          <option name="timeStamp" value="1" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="update app, add settings menu" />
+    <MESSAGE value="update version, apply last commit" />
+    <MESSAGE value="fix some bugs in app" />
+    <MESSAGE value="version 1.3.0, add test class and add new features" />
+    <MESSAGE value="version 1.4.0 add find books functionality" />
+    <MESSAGE value="version 1.5.0 - add readme and started proceed save points of the book, but not finished this task" />
+    <MESSAGE value="version 1.6.0 - add save for bookmarks, add tests, add abstraction class for book information" />
+    <MESSAGE value="Not new version, just update" />
+    <MESSAGE value="Not tested version of App, but add backup and reset functionality" />
+    <MESSAGE value="Refactor app logic" />
+    <MESSAGE value="minor fix" />
+    <MESSAGE value="update auto strategy" />
+    <option name="LAST_COMMIT_MESSAGE" value="update auto strategy" />
   </component>
 </project>
