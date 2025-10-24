@@ -10,7 +10,11 @@ try:
     from core.entities.Formatter import Format
     from enum import Enum
 
-    from core.entities.AbstractModule import Module, INPUT_SYM, CLOSE_MENU_CODE
+    from core.entities.AbstractModule import (
+        Module,
+        INPUT_SYM,
+        CLOSE_MENU_CODE
+    )
 
     import datetime
     import inspect
@@ -130,7 +134,7 @@ class Book_data:
         """
         return Path(self.book_name[:self.book_name.find('.')] + self.__SAVE_POINT_EXTENSION).exists()
 
-    def get_lua_data(self) -> tuple[bool, float, str]:
+    def get_lua_data(self) -> tuple[bool, None, None] | tuple[bool, float, str] | None:
         """
         Method for receiving for book completeness.
         Decide if book is read by two parameters - 1) finished persent of book and 2) book status
