@@ -2,15 +2,29 @@
 
 ## What is it?:
 
-Useful app if you have cracked (with Koreader) Kindle book and want to save your books
+Useful app if you have cracked (with "Koreader") Kindle book and want to save your books
 
-## App methods:
+## Utility modules:
 
-1. App provide convenient way to save books that you want.
-2. App provide delete books that you want
-3. App write history about your already read books
+This utility contains several modules to use:
 
-## App modes:
+### Book database (Book_db):
+
+Inner nosql database for interaction in interactive or non-interactive mode
+
+### Kindle history (history module):
+
+#### module methods:
+
+1. module provide convenient way to save books that you want.
+2. module provide delete books that you want
+3. module write history about your already read books
+
+#### module modes:
 
 1. Auto mode - automatically save books in file.
 2. Manual mode - ask user about anything.
+
+### Transfer book:
+
+module for transferring books from your local personal computer to e-book by tcp or ftp internet protocols

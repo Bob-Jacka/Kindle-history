@@ -763,46 +763,6 @@ class Fs_utility:
         else:
             return False
 
-    def do_backup_copy(self) -> None:
-        """
-        Function for backup your books in given directory (Download dir).
-        :return: None
-        """
-        global_logger.log('Backup books invoked')
-        save_path: str | os.PathLike
-        if platform.system() == Fs_utility.OSType.windows_os:
-            save_path = Path.home().as_uri() + os.sep + 'Downloads'
-            global_logger.log('Windows user path to Downloads')
-        elif platform.system() == Fs_utility.OSType.linux_os:
-            save_path = Path.home().as_uri() + os.sep + 'Downloads'
-            global_logger.log('Linux user path to Downloads')
-        else:
-            raise Exception('Unknown operating system, not implemented yet.')
-
-        for dir in os.listdir(central_dir):
-            self.copy_fs_entity(dir, save_path)
-            global_logger.log(f'File - {dir} backed up in {save_path}')
-
-    def reset_data(self) -> None:
-        """
-        Method for deleting all book data (exclude file with book read).
-        Also home directory of the app will be saved.
-        :return: None
-        """
-        while True:
-            print('Do you really want to delete all books data? yes (y) or no (n)')
-            user_choice = input(INPUT_SYM)
-            if user_choice == 'yes' or user_choice == 'y':
-                global_logger.log('Reset data is invoked')
-                dir_list = self.get_book_data_dirs_list()
-                for dir in dir_list:
-                    self.delete_fs_entity(dir)
-            elif user_choice == 'no' or user_choice == 'n':
-                global_logger.log('Reset data canceled')
-            else:
-                print('Wrong choice, try again')
-                continue
-
     @staticmethod
     def get_book_data_dirs_list() -> list:
         """
