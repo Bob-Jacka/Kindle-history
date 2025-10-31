@@ -6,41 +6,55 @@ Contains CRUD action list for using and some special syntax to use interactive
 import datetime
 import enum
 import os
+import types
 from os import PathLike
 from typing import (
     Final,
-    Literal
+    Literal,
+    Generic,
+    TypeVar,
+    Callable,
+    Any
 )
 
 from core.entities.AbstractModule import Module
+from core.exceptions.DatabaseException import (
+    DatabaseException,
+    SyntaxInterpreterException
+)
 from core.other.Utils import str_input_from_user
 
-RECORD_SEP: Final[str] = '|'
 USER_INPUT_SYM: Final[str] = '>> '
-LOG_FILE_NAME: Final[str] = f'db_logs_{datetime.datetime.now()}.logs'
+LOG_FILE_NAME: Final[str] = f'db_logs_{datetime.datetime.now()}.log'
 
 
-def log_record_action(function, is_file_write: bool = False):
+def log(is_file_write: bool = False) -> Callable:
     """
     Record database function invocation with time and date.
     Can write invocation to file.
     :param is_file_write: is need for file output
-    :param function: input function to wrap
-    :return: None
+    :return: Decorator function
     """
 
-    def logger():
-        log_msg: str = f'[{datetime.datetime.now()}]: invoked database function with name: "{function.__name__}"'
-        print(log_msg)
-        function()
-        if is_file_write:
-            with open(LOG_FILE_NAME) as log_file:
-                log_file.write(log_msg)
+    def decorator(function: Callable) -> Callable:
+        def wrapper(*args, **kwargs) -> Any:
+            log_msg: str = f'[{datetime.datetime.now()}]: invoked database function with name: "{function.__name__}"'
+            print(log_msg)
+            r = function(*args, **kwargs)
+            if is_file_write:
+                try:
+                    with open(LOG_FILE_NAME, 'a') as log_file:
+                        log_file.write(log_msg + '\n')
+                except IOError as e:
+                    print(f"Ошибка записи в лог-файл: {e}")
+            return r
 
-    return logger
+        return wrapper
+
+    return decorator
 
 
-@log_record_action(True)
+@log
 def cancelable_operation(function):
     """
     Cancel operation due to errors and restore previous condition.
@@ -49,10 +63,12 @@ def cancelable_operation(function):
     """
 
     def cancel(*args, **kwargs):
-        print(f'Operation: "{function.__name__}" canceled, previous condition restored')
+        save_list: list = list()  # list object for saving context
         try:
-            function(*args, **kwargs)
+            r = function(*args, **kwargs)
+            return r
         except Exception as e:
+            print(f'Operation: "{function.__name__}" canceled, previous condition restored')
             print(f'Exception during executing "{function.__name__}" - {e}')
 
     return cancel
@@ -68,7 +84,7 @@ class __Book_db_translation(enum.Enum):
 
 class Book_db(Module):
     """
-    Custom database for storing information about books on your e-book
+    Custom nosql database for storing information about books on your e-book
     """
 
     class Syntax_interpreter:
@@ -78,24 +94,26 @@ class Book_db(Module):
         Map contains key for fast retrieving element and tuple with two fields, where first field is syntax word
         and second field is help description for words and its usage.
         """
-        syntax_rules: Final[dict[str, tuple[str, str]]] = {
-            # main operators in database
-            'choose': tuple(('choose', 'like select word in sql, can take parameters for selecting: all or row name')),
-            'delete': tuple(('delete', 'can delete record in table or table')),
-            'create': tuple(('create', 'can create table object with parameters')),
-            'update': tuple(('update', 'update records in table object')),
-            'add': tuple(('add', 'add record to the table, require table name')),
+        __syntax_rules: Final[dict[str, tuple[str, str]]] = {
+            # main operators in database:
+            'choose': tuple(('choose', 'like "select" word in sql, can take parameters for selecting: all or row name')),
+            'delete': tuple(('delete', 'can delete record in table or table (cancelable operation)')),
+            'create': tuple(('create', 'can create table | database or record object with parameters (cancelable operation)')),
+            'update': tuple(('update', 'update records in table object (cancelable operation)')),
+            'add': tuple(('add', 'add record to the table, require table name (cancelable operation)')),
 
-            # embedded functions
+            # embedded functions to use:
             'sync': tuple(('sync', 'synchronize records between your local pc and e-book')),
-            'reg': tuple(('reg', 'word for regular expressions, take string object as a parameter')),
+            'reg': tuple(('reg', 'word for regular expressions, take string object as a parameter and find string')),
 
-            # other words
+            # other words:
             'help': tuple(('help', 'special operator for help users in their usage of BQL syntax')),
             'all': tuple(('all', 'special word for selecting or deleting all records in database')),
             'in': tuple(('in', 'like "from" word in sql')),
+            'using': tuple(('using', '')),
 
-            # entity words
+            # entity words:
+            'database': tuple(('database', 'word for creating database')),
             'table': tuple(('table', 'word for table in database, contains parameters: name, order or limit')),
             'record': tuple(('record', 'word for record in table'))
         }
@@ -108,15 +126,17 @@ class Book_db(Module):
         2. delete <record> in <table_name> (delete statement)
             delete Record(name="Harry potter", <optional book type>, <optional read time>) in Table(name="customers")
             
-        3. synk (synchronize data between database and e-book)
+        3. sync (synchronize data between database and e-book)
         
-        4. create Table(name=<required parameters name>) - (creates table with given parameters)
+        4. create Table(name=<required parameters name>) in Database(name=<db_name>) - (creates table with given parameters)
+            4.1 create Database(name=standard_db)
         
         5. add Record(name='We') in Table(name="tableName")
         
         6. update Record(name='Brave new world') in Table(name='Anti_utopias') 
             6.1 update Record(name=reg('45 ')) in Table(name=reg('Anti'))
             - you can use 'reg' word for regular expressions if you do not remember full name
+        7. using Database(name=db_name_to_use)
         
         Other examples: Choose all in Table(name="math", order=desk, limit=10) - descending select from all from 
         table named math and limit by 10 records"""
@@ -127,38 +147,45 @@ class Book_db(Module):
             1. first you need to create database object
             2. second create tables in your database
             3. and last create records in tables
+            4. And fourth, use it...
             """
 
-            class Database:
+            class _Database:
                 """
-                Upper level entity in book_db
+                Upper level entity in book_db.
+                Contains tables and actions with them.
                 """
 
-                class Table:
+                T = TypeVar('T')  # Generic type of table
 
+                class _Table(Generic[T]):
                     """
                     Quant of book database storage.
                     """
 
-                    class Record:
+                    class _Record:
                         """
                         Quant of book database storage table.
-                        Record consists of next columns:
-                        0. id - unique identifier of the book
-                        1. Book name - name of the book (1-80) - Required parameter
-                        2. Book category (type ex. Math)
-                        3. Read date (datetime or '-' if not read yet)
-                        4. Book type - can be text or audio (for audiobooks)
+                        Record consists of the next columns:
+                        id, Book name, Book category, Read date, Book type
                         """
 
-                        type Book_type = Literal['text', 'audio']
+                        type __Book_type = Literal['text', 'audio']
 
-                        def __init__(self, id: int, book_name: str, book_category: str = '', read_time: str = '',
-                                     book_type: Book_type = 'text'):
-                            self.id = id
+                        def __init__(self, identifier: int, book_name: str, book_category: str = '', read_date: str = '',
+                                     book_type: __Book_type = 'text'):
+                            """
+                            Create record entity with given parameters:
+                            :param identifier: int identifier of book, like 1, 2, 3 or ...
+                            :param book_name: name of the book to include
+                            :param book_category: category of the book, like math or programming
+                            :param read_date: date when book was read.
+                            :param book_type: type of the book, can contain one of the value - audio or text.
+                            """
+                            self.id = identifier
                             self.book_name = book_name
                             self.book_category = book_category
-                            self.read_time = read_time
+                            self.read_date = read_date
                             self.type = book_type
 
                         def get_book_id(self):
@@ -170,17 +197,22 @@ class Book_db(Module):
                         def get_dir_name(self):
                             return self.book_category
 
-                        def get_read_time(self):
-                            return self.read_time
+                        def get_read_date(self):
+                            return self.read_date
 
                         def get_book_type(self):
                             return self.type
 
-                        def to_string(self) -> str:
-                            return f'{self.book_name}{RECORD_SEP}{self.book_category}{RECORD_SEP}{self.read_time}'
+                        def print_object(self):
+                            print(f'''
+                            Book name: {self.book_name},
+                            Book category: {self.book_category},
+                            Book read date: {self.read_date}
+                            ''')
 
                     def __init__(self, table_name: str):
                         self.table_name = table_name
+                        self.__inner_table: list = list()  # inner table container for records
                         # initialize table and create file
                         self.__init_table()
 
@@ -189,7 +221,10 @@ class Book_db(Module):
 
                     @cancelable_operation
                     def add_record(self, record):
-                        pass
+                        try:
+                            self.__inner_table.append(record)
+                        except Exception as e:
+                            print(f'An exception during add record to table - {e}')
 
                     @cancelable_operation
                     def update_record(self, table_name: str, identifier: str):
@@ -199,7 +234,7 @@ class Book_db(Module):
                     def delete_record(self, table_name: str, identifier: str):
                         pass
 
-                    @log_record_action
+                    @log
                     def select_records(self) -> None:
                         """
                         Select from already read and e-book files
@@ -214,37 +249,73 @@ class Book_db(Module):
                         else:
                             print('Table already exists')
 
-                table: list[Table] = None
+                __tables: list[_Table]  # container for tables in database
 
-                def __init__(self):
-                    self.tables = list()
+                def __init__(self, database_name: str):
+                    self.database_name: str = database_name
+                    self.__tables = list()
+                    if not os.listdir().__contains__(database_name):
+                        self.__init_database()
+                    else:
+                        pass
+
+                def __find_table(self, predicate) -> _Table:
+                    """
+                    Inner method of finding table in database.
+                    :param predicate: predicate function for comparison, should take _Table object and return bool value.
+                    :return: Table object that equals predicate.
+                    """
+                    table_to_return = None
+                    if isinstance(predicate, types.FunctionType):
+                        for table in self.__tables:
+                            if predicate(table):
+                                table_to_return = table
+                                break
+                        return table_to_return
+                    else:
+                        raise DatabaseException(f'Given predicate {predicate} is not a function')
 
                 @cancelable_operation
-                def create_table(self, table_name: str) -> None:
+                def _create_table(self, table_name: str) -> None:
                     """
                     Creates new file, called table in terms of book database.
                     :return: None
                     """
                     try:
-                        new_table = self.Table(table_name)
-                        self.tables.append(new_table)
+                        new_table = self._Table(table_name)
+                        self.__tables.append(new_table)
                     except Exception as e:
                         print(f'An exception occurred during creating table - {e}')
 
                 @cancelable_operation
-                def delete_table(self, table_name: str) -> None:
-                    pass
+                def _delete_table(self, table_name: str) -> None:
+                    if not len(self.__tables):
+                        self.__tables.remove(self.__find_table(lambda x: x.get_table_name() == table_name))
+                    else:
+                        raise DatabaseException(f'Error during deleting table with given name {table_name}')
 
                 def get_tables(self):
-                    return self.tables
+                    if not len(self.__tables) == 0:
+                        return self.__tables
+                    else:
+                        raise DatabaseException('')
 
-            def __int__(self):
-                pass
+                @log
+                def __init_database(self):
+                    """
+                    Create database and initialize database architecture by creating folders (tables)
+                    :return:
+                    """
+                    pass
+
+            def __init__(self):
+                self.databases: list = list()
 
             @cancelable_operation
-            def create_database(self):
+            def _create_database(self, db_name: str) -> None:
                 try:
-                    self.database = self.Database()
+                    new_database = self._Database(db_name)
+                    self.databases.append(new_database)
                 except Exception as e:
                     print()
 
@@ -256,19 +327,27 @@ class Book_db(Module):
                 """
                 pass
 
+            @log
+            def get_database(self):
+                if len(self.databases) != 0:
+                    return self.databases
+                else:
+                    raise
+
         def __int__(self):
+            # Interpreter entities init:
             self.database_core = self._Database_core()
 
-        @log_record_action
+        @log
         def parse_sentence(self, sentence: str) -> None:
             """
-            Parse given sentence in BQL and invoke functions.
-            :param sentence: sentence in book query language.
+            Parse given sentence in book query language and invoke functions.
+            :param sentence: string sentence in book query language.
             :return: None
             """
             lexemes = sentence.split(' ')
-            if lexemes[0].lower() in self.syntax_rules.keys():
-                operator = lexemes[0]
+            operator = lexemes[0].lower()  # operator name in lower case, so you can write in UPPER or lower case
+            if operator in self.__syntax_rules.keys():  # check if operator contains in syntax rules
                 match operator:
                     case 'help':
                         self.print_help()
@@ -283,60 +362,47 @@ class Book_db(Module):
                     case 'sync':
                         self.__parse_sync_operator()
                     case _:
-                        raise RuntimeError(
+                        raise SyntaxInterpreterException(
                             f'Unknown operator given - {operator}'
                         )  # yeah, I know that I handle this problem
             else:
-                raise RuntimeError('Sentence should start with one of the operators')
+                raise SyntaxInterpreterException('Sentence should start with one of the operators')
 
-        @log_record_action
+        @log
         def __parse_select_operator(self, lexemes: list[str]):
             pass
 
-        @log_record_action
+        @log
         def __parse_delete_operator(self, lexemes: list[str]):
             pass
 
-        @log_record_action
+        @log
         def __parse_create_operator(self, lexemes: list[str]):
             pass
 
-        @log_record_action
+        @log
         def __parse_update_operator(self, lexemes: list[str]):
             pass
 
-        @log_record_action
+        @log
         def __parse_add_operator(self, lexemes: list[str]):
             pass
 
-        @log_record_action
+        @log
         def __parse_sync_operator(self):
             self.database_core.synchronize()
 
-        @log_record_action
+        @log
         def print_help(self):
             print('This module is responsible for database functionality')
             print('Here are words that used')
-            for _, value in self.syntax_rules:
+            for _, value in self.__syntax_rules:
                 print(f'{value[0]} word contains next comment: {value[1]}')
 
     def __init__(self, is_interactive_mode: bool = None, start_point: str | PathLike = '.'):
         self.is_interactive = is_interactive_mode
         self.syntax_interpreter = self.Syntax_interpreter()
         self.start_point = start_point
-        self.tables: list[Book_db.Syntax_interpreter._Database_core.Table]  # table of database, string values of names
-        # init inner database structure
-        self.__init_database()
-
-    def __init_database(self) -> None:
-        """
-        Initialize database by checking for table files
-        :return: None
-        """
-        tables = os.listdir(self.start_point)
-
-    def __change_table(self):
-        pass
 
     @staticmethod
     def __get_table_view(file_descriptor) -> list[str]:
@@ -347,11 +413,7 @@ class Book_db(Module):
         """
         return file_descriptor.readlines()
 
-    @staticmethod
-    def __generate_table_name(init_table_name: str) -> str:
-        return f'table-{init_table_name}'
-
-    @log_record_action
+    @log
     def __run_interactive(self):
         while True:
             print('Enter command to run in interpreter or "close" to close: ', end='')
@@ -360,12 +422,13 @@ class Book_db(Module):
                 if user_command_line != 'close':
                     self.syntax_interpreter.parse_sentence(user_command_line)
                 else:
+                    print('Close cli connection to database')
                     break
             else:
                 print('Entered empty command, try again')
                 continue
 
-    @log_record_action
+    @log
     def __run_non_interactive(self):
         while True:
             print('Enter command number to run:')
@@ -385,20 +448,19 @@ class Book_db(Module):
                         print('Wrong command number, try again')
                         continue
             except Exception as e:
-                pass
+                print(f'An error during non interactive mode execution - {e}')
 
-    @log_record_action
+    @log
     def run_module(self) -> None:
         """
-        Main entry point to database actions.
-        Can be interactive (in cli by bql (book query language)) or just pick commands from list
+        Main entry point to database actions module.
+        Can be interactive (in cli by BQL (book query language)) or just pick commands from list
         :return: None
         """
         try:
             if self.is_interactive is None:
                 while True:
-                    print('Run module interactively or not?')
-                    choice = str_input_from_user()
+                    choice = str_input_from_user('Run module interactively or not?')
                     if choice == 'yes':
                         self.__run_interactive()
                         break

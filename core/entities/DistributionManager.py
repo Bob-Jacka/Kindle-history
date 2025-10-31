@@ -25,14 +25,14 @@ if __name__ == '__main__':
         module_to_use = int(input('>> '))
         match module_to_use:
             case 1:
-                Kindle_history().run_module()
-                continue
+                history_module = Kindle_history()
+                history_module.run_module()
             case 2:
-                Transfer_book().run_module()
-                continue
+                transfer_module = Transfer_book()
+                transfer_module.run_module()
             case 3:
-                Book_db().run_module()
-                continue
+                book_db = Book_db()
+                book_db.run_module()
             case 4:
                 print('Bye')
                 exit(0)
