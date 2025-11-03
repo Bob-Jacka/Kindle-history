@@ -2,14 +2,9 @@
 Entry point to utility and modules, contains global data from modules
 """
 
-from typing import Final
-
 from core.modules.Book_db import Book_db
 from core.modules.Kindle_history import Kindle_history
 from core.modules.Transfer_book import Transfer_book
-
-APP_VERSION: Final[str] = '3.0.0'
-
 
 def help_distribution_manager():
     pass

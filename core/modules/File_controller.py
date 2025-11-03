@@ -3,9 +3,13 @@ Module that responsible for interaction with file system on your pc
 """
 import csv
 import os
+import re
+import shutil
 import stat
 from os import PathLike
+from sys import platform
 
+from core.entities.Formatter import Format
 from core.other.Utils import (
     print_success,
     print_error,
@@ -14,6 +18,18 @@ from core.other.Utils import (
 
 
 class File_controller_tests:
+    pass
+
+
+class Csv_helper:
+    pass
+
+
+class Json_helper:
+    pass
+
+
+class Yaml_helper:
     pass
 
 
@@ -122,3 +138,102 @@ class File_controller:
             else:
                 print('Wrong choice, try again')
                 continue
+
+    def delete_fs_entity(self, path: str | os.PathLike) -> None:
+        """
+        Function for deleting book in given path, also can delete directory with save points;
+        :param path: path to book
+        :return: None
+        """
+        global_logger.log('Delete fs entity invoked')
+        if path is not None:
+
+            # file branch
+            if os.path.isfile(path):
+                try:
+                    if path.endswith(self.path_to_read_file):
+                        global_logger.log('You cannot delete your read file!')
+                    else:
+                        os.remove(path)
+                        Format.prGreen('Book deleted from directory')
+                except Exception as e:
+                    global_logger.log(f'Exception occurred in deleting book in {path} - {e}')
+
+            # directory branch
+            elif os.path.isdir(path):
+                try:
+                    shutil.rmtree(path)
+                    Format.prGreen(f'Directory {path} deleted')
+                except Exception as e:
+                    global_logger.log(f'Exception occurred in deleting directory in {path} - {e}')
+        else:
+            global_logger.log('Path cannot be None')
+
+    def copy_fs_entity(self, path: str | os.PathLike, dir_name: str = '') -> None:
+        """
+        Save your book in central directory (app installation home).
+        :param path: path from where you want to copy read book.
+        :param dir_name: *optional parameter, special for directory copying. Use for creating new directory and copy all into
+        :return: None
+        """
+        # global_logger.log('Copy fs entity invoked')
+        if path is not None:
+
+            # file branch
+            if os.path.isfile(path):
+                try:
+                    shutil.copy2(path, central_dir)  # {src} {dest}
+                    Format.prGreen('Book save in central directory')
+                except Exception as e:
+            # global_logger.log(f'Error occurred while saving book in central dir - {e}')
+
+            # directory branch
+            elif os.path.isdir(path):
+                try:
+                    new_save_point_path = central_dir + os.sep + dir_name
+                    os.mkdir(new_save_point_path)  # create new directory, instead of deleting old
+                    shutil.copytree(path, new_save_point_path, dirs_exist_ok=True)  # {src} {dest}
+                    Format.prGreen('Directory save in central directory')
+                except Exception as e:
+            # global_logger.log(f'Error occurred while saving directory in central dir - {e}')
+
+            else:
+                Format.prRed('Object type nor file or directory')
+                raise Exception(f'Cannot determine object type of {path}')
+            self.delete_fs_entity(path)
+        else:
+
+    # global_logger.log('Path cannot be None')
+
+    def creation_date(self, path_to_file: str | os.PathLike) -> str:
+        """
+        Try to get the date that a file was created, falling back to when it was
+        last modified if that isn't possible.
+        See http://stackoverflow.com/a/39501288/1709587 for explanation.
+        """
+        if platform.system() == Fs_utility.OSType.windows_os:
+            return str(os.path.getctime(path_to_file))
+        elif platform.system() == Fs_utility.OSType.linux_os:
+            try:
+                mtime = os.path.getmtime(path_to_file)
+                mtime_readable = datetime.date.fromtimestamp(mtime)
+                return str(mtime_readable)
+            except AttributeError:
+                return str(datetime.datetime.now())
+        else:
+            raise NotImplemented('It seems that you have Mac operating system, not implemented for this system')
+
+    def is_book(self, name: str) -> bool:
+        """
+        Function for filtering directory for books
+        :param name: name of the file to proceed
+        :return: bool value, if name ended with 'book' extensions.
+        """
+        ext = os.path.splitext(name)[1]
+        if not ext:
+            return False
+        ext = ext[1:].lower()
+        bad_ext_pat = re.compile(r'[^a-z0-9_]+')
+        if ext in self.non_ebook_extensions or bad_ext_pat.search(ext) is not None:
+            return False
+        return True

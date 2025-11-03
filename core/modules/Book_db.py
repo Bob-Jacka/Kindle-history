@@ -96,9 +96,11 @@ class Book_db(Module):
         """
         __syntax_rules: Final[dict[str, tuple[str, str]]] = {
             # main operators in database:
-            'choose': tuple(('choose', 'like "select" word in sql, can take parameters for selecting: all or row name')),
+            'choose': tuple(
+                ('choose', 'like "select" word in sql, can take parameters for selecting: all or row name')),
             'delete': tuple(('delete', 'can delete record in table or table (cancelable operation)')),
-            'create': tuple(('create', 'can create table | database or record object with parameters (cancelable operation)')),
+            'create': tuple(
+                ('create', 'can create table | database or record object with parameters (cancelable operation)')),
             'update': tuple(('update', 'update records in table object (cancelable operation)')),
             'add': tuple(('add', 'add record to the table, require table name (cancelable operation)')),
 
@@ -126,7 +128,7 @@ class Book_db(Module):
         2. delete <record> in <table_name> (delete statement)
             delete Record(name="Harry potter", <optional book type>, <optional read time>) in Table(name="customers")
             
-        3. sync (synchronize data between database and e-book)
+        3. sync (synchronize data between database and e-book, require no parameters)
         
         4. create Table(name=<required parameters name>) in Database(name=<db_name>) - (creates table with given parameters)
             4.1 create Database(name=standard_db)
@@ -136,7 +138,11 @@ class Book_db(Module):
         6. update Record(name='Brave new world') in Table(name='Anti_utopias') 
             6.1 update Record(name=reg('45 ')) in Table(name=reg('Anti'))
             - you can use 'reg' word for regular expressions if you do not remember full name
-        7. using Database(name=db_name_to_use)
+            
+        7. using Database(name=db_name_to_use) - use database as main database in utility, all table actions will be 
+        using with tables in this database
+            7.1 Delete Database(name=db_name) - delete database 
+            7.2 Create Database(name=db_name) - And you can create database, other CRUD actions are not allowed
         
         Other examples: Choose all in Table(name="math", order=desk, limit=10) - descending select from all from 
         table named math and limit by 10 records"""
@@ -172,9 +178,11 @@ class Book_db(Module):
 
                         type __Book_type = Literal['text', 'audio']
 
-                        def __init__(self, identifier: int, book_name: str, book_category: str = '', read_date: str = '',
+                        def __init__(self, identifier: int, book_name: str, book_category: str = '',
+                                     read_date: str = '',
                                      book_type: __Book_type = 'text'):
                             """
+                            Wrapper class for record in database, take book data class parameters and create wrapper in db
                             Create record entity with given parameters:
                             :param identifier: int identifier of book, like 1, 2, 3 or ...
                             :param book_name: name of the book to include
