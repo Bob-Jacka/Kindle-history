@@ -1,3 +1,9 @@
+import os
+
+_config_name: str = 'config.txt'
+_INPUT_SYM = '>> '
+
+
 class App_config:
     """
     Class for configuration application with parameters.
@@ -46,13 +52,13 @@ class App_config:
         print('is_auto_mode: <true or false values>')
         print('is_enable_logs: <true or false values>')
         print('exclude_directories: <one_dir_name, second_dir_name, third_dir_name> (list with dirs names)')
-        if not os.path.exists(Fs_utility.config_name):
-            global_logger.log('Config is not exits')
+        if not os.path.exists(_config_name):
+            print('Config is not exits')
             while True:
                 print('Would you like to create test config file in this directory - yes (y) or no (n)?')
-                user_input = input(INPUT_SYM)
+                user_input = input(_INPUT_SYM)
                 if user_input == 'yes' or user_input == 'y':
-                    Fs_utility.App_config.create_tmp_config()
+                    App_config.create_tmp_config()
                     break
                 else:
                     break
@@ -115,7 +121,7 @@ class App_config:
         :return: None
         """
         try:
-            with open(Fs_utility.config_name, 'w+') as tmp_config:
+            with open(_config_name, 'w+') as tmp_config:
                 tmp_config.write('read_book_file_name: read.txt')
                 tmp_config.write('\n')
                 tmp_config.write('is_auto_mode: false')
@@ -125,6 +131,6 @@ class App_config:
                 tmp_config.write('\n')
                 tmp_config.write('exclude_directories: None')
                 tmp_config.write('\n')
-            global_logger.log('Config file created successfully')
+            print('Config file created successfully')
         except Exception as e:
             print(f'Exception in create config file - {e}')

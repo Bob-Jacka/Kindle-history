@@ -14,6 +14,11 @@ type Book_type = Literal['audio', 'text']
 Special type for type of the book in this utility.
 """
 
+_SAVE_POINT_EXTENSION: Final[str] = '.sdr'
+"""
+Extension of the file with bookmarks in cracked Kindle device. 
+"""
+
 
 class Book_data:
     """
@@ -21,24 +26,20 @@ class Book_data:
     Include dir where book stored and its name.
     """
 
-    __SAVE_POINT_EXTENSION: Final[str] = '.sdr'
-    """
-    Extension of the file with bookmarks in cracked Kindle device. 
-    """
-
-    def __init__(self, current_working_dir: str | os.PathLike = '.', book_name: str = '', book_category: str = '',
-                 book_type: Book_type = 'text'):
+    def __init__(self, current_storing_dir: str | os.PathLike = '.', book_name: str = '', book_category: str = '',
+                 book_type: Book_type = 'text', book_author: str = ''):
         """
         Book data constructor
-        :param current_working_dir:
+        :param current_storing_dir: directory where book is stored
         :param book_name: name of the book (string value)
-        :param book_category:
-        :param book_type:
+        :param book_category: category of the book
+        :param book_type: literal type
         """
-        self.current_dir = current_working_dir
+        self.current_dir = current_storing_dir
         self.book_name = book_name
         self.book_type = book_type
         self.book_category = book_category
+        self.book_author = book_author
 
     def get_current_dir(self) -> str:
         return self.current_dir
@@ -51,6 +52,9 @@ class Book_data:
 
     def get_book_name(self) -> str:
         return self.book_name
+
+    def get_book_author(self) -> str:
+        return self.book_author
 
     def get_book_extension(self, book_extensions: list) -> str | None:
         """
@@ -77,7 +81,7 @@ class Book_data:
         Do not exception safe, need to check path before use.
         :return: string value
         """
-        return self.current_dir + self.book_name[:self.book_name.find('.')] + self.__SAVE_POINT_EXTENSION
+        return self.current_dir + self.book_name[:self.book_name.find('.')] + _SAVE_POINT_EXTENSION
 
     def get_save_point_name(self) -> str:
         """
@@ -85,14 +89,14 @@ class Book_data:
         Do not exception safe, need to check path before use.
         :return: name of bookmark dir
         """
-        return self.book_name[:self.book_name.find('.')] + self.__SAVE_POINT_EXTENSION
+        return self.book_name[:self.book_name.find('.')] + _SAVE_POINT_EXTENSION
 
     def has_bookmark_dir(self) -> bool:
         """
         Method for checking if bookmark dir exists
         :return: bool value of existence.
         """
-        return Path(self.book_name[:self.book_name.find('.')] + self.__SAVE_POINT_EXTENSION).exists()
+        return Path(self.book_name[:self.book_name.find('.')] + _SAVE_POINT_EXTENSION).exists()
 
     def get_lua_data(self) -> tuple[bool, None, None] | tuple[bool, float, str] | None:
         """

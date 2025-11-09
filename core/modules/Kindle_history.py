@@ -4,17 +4,31 @@ Store your read books in file or delete already read book from your e-book, like
 
 Module gives you an interactive way of using your e-book
 """
-from data.Constants import global_logger
-
 try:
-    from core.entities.Formatter import Format
-    from enum import Enum
-
-    from core.entities.AbstractModule import (
-        Module,
+    from core.entities.App_config import (
+        App_config,
+        _config_name
+    )
+    from core.entities.Kindle_history_entities.Book_data import Book_data
+    from core.entities.File_controller import File_controller
+    from core.entities.PathFinder import (
+        get_central_dir_name,
+        get_current_dir_name,
+        set_current_dir,
+        move_upper,
+        move_lower,
+        count_books
+    )
+    from data.Constants import (
+        global_logger,
         INPUT_SYM,
         CLOSE_MENU_CODE
     )
+
+    from core.entities.Formatter import Format
+    from enum import Enum
+
+    from core.entities.AbstractModule import Module
 
     import datetime
     import inspect
@@ -48,43 +62,8 @@ class Strategy(ABC):
         """
         Static file name where you store your statistics about books that you already read.
         """
-        self.fs_util = __Fs_utility(self.get_static_file_with_red())
-        self.fs_util.open_read_file()
+        self.fs_util = File_controller()
         self.local_logger = local_logger
-
-    def init_app(self) -> None:
-        """
-        Main entry point to app.
-        Initialize some useful application variables.
-        Contains in base class for strategies
-        :return: None
-        """
-        global current_dir, central_dir, book_read_file, FULL_PATH_TO_READ_FILE
-        try:
-            central_dir = os.getcwd()
-            current_dir = os.getcwd()
-            FULL_PATH_TO_READ_FILE = central_dir + os.path.sep + self.__STATIC_FILE_NAME_WITH_READ
-            if os.path.exists(FULL_PATH_TO_READ_FILE):
-                global_logger.log('Read books file found')
-                book_read_file = os.path.join(central_dir, self.__STATIC_FILE_NAME_WITH_READ)
-            else:
-                global_logger.log('Read books file not found')
-                Format.prYellow('Would you like to create file with read books? (yes(y) /no (n))')
-                user_choice = input(INPUT_SYM)
-                if user_choice == 'yes' or user_choice == 'y':
-                    os.mknod(central_dir + os.sep + self.get_static_file_with_red())
-                    book_read_file = os.path.join(central_dir, self.__STATIC_FILE_NAME_WITH_READ)
-                    global_logger.log('File for your book history created!')
-                else:
-                    global_logger.log('Read file not found and create, app closing')
-                    exit(1)
-            global_logger.log('App initialized with paths in manual mode')
-            if current_dir is None:
-                global_logger.log('Current directory cannot be None.')
-                raise Exception('Current directory cannot be None.')
-        except Exception as e:
-            global_logger.log(f'Some exception occurred in init app - {e}')
-            exit(1)
 
     def get_static_file_with_red(self) -> str:
         """
@@ -118,9 +97,8 @@ class Strategy(ABC):
         Menu with app settings.
         :return: None
         """
-        global current_dir
         while True:
-            print(f'Your current path is - "{Format.underline_start + current_dir + Format.underline_end}"')
+            print(f'Your current path is - "{Format.underline_start + get_current_dir_name() + Format.underline_end}"')
             Format.prYellow('Available actions in app settings:')
             print('1) Go home path')
             print('2) Change file with already read books')
@@ -134,7 +112,7 @@ class Strategy(ABC):
                 if act_num in range(1, 8):  # from 1 to 4
                     match act_num:
                         case 1:
-                            current_dir = central_dir
+                            set_current_dir(get_central_dir_name())
                             Format.prGreen('Path changed')
                         case 2:
                             new_name = input('Input new name, >> ')
@@ -146,7 +124,7 @@ class Strategy(ABC):
                                 Format.prRed('Wrong new name or empty, try again')
                                 continue
                         case 3:
-                            self.fs_util.count_books()
+                            count_books()
                         case 4:
                             self.print_help()
                         case 5:
@@ -175,8 +153,8 @@ class Strategy(ABC):
         print(f'*You need to include file with name - "{self.__STATIC_FILE_NAME_WITH_READ}" in dir ')
         print('where you contain this app to write read book to the list.')
         print('Some useful app variables:')
-        print(f'Home directory - {central_dir},')
-        print(f'Current app directory - {current_dir},')
+        print(f'Home directory - {get_central_dir_name()},')
+        print(f'Current app directory - {get_current_dir_name()},')
         print(f'File with read books - {book_read_file is not None if 'Book file exist' else 'No path given'},')
         print('Ways to use this app:')
         print('1. Use with config')
@@ -185,7 +163,7 @@ class Strategy(ABC):
             print('Would you like to see help for config file - yes (y) or no (n)?')
             user_input = input(INPUT_SYM)
             if user_input == 'yes' or user_input == 'y':
-                __Fs_utility.App_config.get_help_config()
+                App_config.get_help_config()
                 break
             else:
                 break
@@ -214,9 +192,8 @@ class AutoStrategy(Strategy):
         Main cycle of auto strategy
         :return: None
         """
-        self.init_app()
         while True:
-            print(f'Your current path is - "{Format.underline_start + current_dir + Format.underline_end}"')
+            print(f'Your current path is - "{Format.underline_start + get_current_dir_name() + Format.underline_end}"')
             Format.prYellow('Available actions:')
             print('1) Start auto process')
             print('2) App setting...')
@@ -297,7 +274,7 @@ class AutoStrategy(Strategy):
                 for book_file in dir_name:  # process books files in directory
                     if self.fs_util.is_book(book_file):
                         global_logger.log(f'Found book file ({book_file}) in directory ({dir_name})')
-                        book = Book_data(current_dir, book_file)
+                        book = Book_data(get_current_dir_name(), book_file)
                         if book.has_bookmark_dir():
                             global_logger.log(f'Found bookmark directory, decide to add book - {book.get_book_name()}')
                             if Book_data.decide_if_book_finished(book.get_lua_data()):
@@ -332,9 +309,8 @@ class ManualStrategy(Strategy):
         Main cycle of manual strategy
         :return: None
         """
-        self.init_app()
         while True:
-            print(f'Your current path is - "{Format.underline_start + current_dir + Format.underline_end}"')
+            print(f'Your current path is - "{Format.underline_start + get_current_dir_name() + Format.underline_end}"')
             Format.prYellow('Available actions:')
             print('1) Move menu...')
             print('2) App setting...')
@@ -351,7 +327,7 @@ class ManualStrategy(Strategy):
                         case 2:
                             self.app_settings_menu()  # derived from Strategy
                         case 3:
-                            self.__list_all_read_book(current_dir)
+                            self.__list_all_read_book(get_current_dir_name())
                         case 4:
                             self.__list_favourite_books()
                         case 5:
@@ -371,7 +347,7 @@ class ManualStrategy(Strategy):
         :return: None
         """
         while True:
-            print(f'Your current path is - "{Format.underline_start + current_dir + Format.underline_end}"')
+            print(f'Your current path is - "{Format.underline_start + get_current_dir_name() + Format.underline_end}"')
             Format.prYellow('Available actions in app settings:')
             print('1) Move upper')
             print('2) Move lower')
@@ -382,10 +358,10 @@ class ManualStrategy(Strategy):
                 if act_num in range(1, 5):  # from 1 to 5
                     match act_num:
                         case 1:
-                            self.move_upper()
+                            move_upper()
                             break
                         case 2:
-                            self.move_lower()
+                            move_lower()
                             break
                         case 3:
                             self.fs_util.find_book()
@@ -398,46 +374,6 @@ class ManualStrategy(Strategy):
             except Exception as e:
                 global_logger.log(f'Exception occurred in settings - {e}.')
                 exit(1)
-
-    @staticmethod
-    def move_upper():
-        """
-        Move upper in file system tree
-        :return: None
-        """
-        global current_dir
-        current_dir = Path(current_dir).parent
-
-    @staticmethod
-    def move_lower():
-        """
-        Move lower in file system tree
-        :return: None
-        """
-        global current_dir
-        p = Path('../..')  # check current directory
-        dir_list = [x for x in p.iterdir() if x.is_dir()]
-        Format.prGreen('Available directories:')
-        if len(dir_list) == 0:
-            Format.prRed('There are no directories nearby')
-        else:
-            dir_counter = 0  # change value to zero if you are a programmer.
-            for dir in dir_list:
-                print(f'{dir_counter}: {dir.name}')
-                dir_counter += 1
-
-            print()  # just empty line
-            print(f'Or {CLOSE_MENU_CODE}: to exit this menu')
-
-            while True:
-                print('Enter dir number to move in')
-                dir_number = int(input(INPUT_SYM))
-                if dir_number in range(len(dir_list)):
-                    current_dir = dir_list[dir_number].as_posix()
-                    break
-                elif dir_number == int(CLOSE_MENU_CODE):
-                    global_logger.log('Close menu')
-                    break
 
     def __list_all_read_book(self, path: str | os.PathLike):
         """
@@ -469,7 +405,7 @@ class ManualStrategy(Strategy):
                         book_name = filtered_list[book_num]  # name of the book to delete / save
                         self.add_new_book(
                             Book_data(
-                                current_working_dir=current_dir + os.sep,
+                                current_storing_dir=get_current_dir_name() + os.sep,
                                 book_name=book_name
                             )
                         )
@@ -485,7 +421,7 @@ class ManualStrategy(Strategy):
         Function for listing favourite books (books that saved in home directory)
         :return: None
         """
-        fav_books = os.listdir(central_dir)
+        fav_books = os.listdir(get_central_dir_name())
         fav_filtered_list = list(filter(self.fs_util.is_book, fav_books))
         fav_filtered_list.remove(self.get_static_file_with_red())  # because we list home dir, there will be read.txt
         if len(fav_filtered_list) != 0:
@@ -538,129 +474,6 @@ class ManualStrategy(Strategy):
                 global_logger.log(f'Exception while adding new book - {e}')
 
 
-class __Fs_utility:
-    """
-    Class for file systems actions.
-    """
-
-    config_name: str = 'config'
-    """
-    Static name of the config file
-    """
-
-    class EBookManufacturer(Enum):
-        """
-        Enum with several e-book manufacturers
-        """
-        kindle = 'kindle',
-        onyx = 'onyx'
-        pocket_book = 'pocket_book'
-
-    class OSType(Enum):
-        windows_os = 'Windows',
-        linux_os = 'Linux',
-        mac_os = 'Mac_os'
-
-    def __init__(self, file_with_read: str | os.PathLike):
-        self.path_to_read_file = file_with_read
-        self.file_with_read_book = None
-
-    def close_read_file(self):
-        try:
-            self.file_with_read_book.close()
-        except Exception as e:
-            global_logger.log(f'Exception occurred while closing file with read books - {e}')
-
-    def open_read_file(self):
-        try:
-            self.file_with_read_book = open(self.path_to_read_file)
-        except Exception as e:
-            global_logger.log(f'Exception occurred while opening file with read books - {e}')
-            self.file_with_read_book.close()
-
-    @staticmethod
-    def get_book_data_dirs_list() -> list:
-        """
-        Method for receiving book data (directories names with books, except home directory)
-        :return: list with strings (paths)
-        """
-        lst = os.listdir(Path('../../..'))  # go back, out of home directory.
-        if central_dir in lst:
-            global_logger.log('Central dir removed from lst in get book data list')
-            lst.remove(central_dir)
-        else:
-            global_logger.log('Central dir is not in lst')
-        return lst
-
-    @staticmethod
-    def is_need_for_new_line() -> bool:
-        """
-        Super dummy function for checking if you need new line symbol in read file.
-        :return: bool value if you need for new line in read file
-        """
-        books_counter: int = 0
-        new_line_counter: int = 0
-        with open(FULL_PATH_TO_READ_FILE, 'r') as book_file:
-            while True:
-                line = book_file.readline()
-
-                if line.endswith('\n'):
-                    new_line_counter += 1
-
-                if line == '':
-                    break
-
-                books_counter += 1
-        if books_counter > new_line_counter:
-            return True
-        elif books_counter == new_line_counter:
-            return False
-        else:
-            return False
-
-    @staticmethod
-    def find_book() -> None:
-        """
-        Function for finding book in read file, by providing book name or name part.
-        :return: None
-        """
-        while True:
-            Format.prYellow('Enter book name to find')
-            book_to_find = input(INPUT_SYM)
-            if book_to_find != '' and book_to_find is not None:
-                with open(FULL_PATH_TO_READ_FILE) as book_file:
-                    for book in book_file:
-                        if book.find(book_to_find):
-                            Format.prGreen('Book found')
-                            break
-                        else:
-                            Format.prRed('Book not found')
-                            break
-                    break  # exit loop if book found or not
-
-    def get_file_with_read(self):
-        """
-        Getter method for read book file descriptor
-        :return:
-        """
-        return self.file_with_read_book
-
-    def count_books(self):
-        """
-        Function for count books in read file if exists
-        :return: book count in terminal
-        """
-        if os.path.exists(self.path_to_read_file):
-            book_counter = 0
-            for line in self.file_with_read_book:
-                if line != '\n':
-                    book_counter += 1
-            print(f'Books count is - {Format.underline_start + str(book_counter) + Format.underline_end}')
-
-        else:
-            global_logger.log('Read book file not found!')
-
-
 ####################Tests
 class Kindle_history_test:
     """
@@ -670,7 +483,6 @@ class Kindle_history_test:
 
     def __init__(self):
         print('Test class do test actions')
-        self.fs_util = __Fs_utility(FULL_PATH_TO_READ_FILE)
 
     def test_delete_book1(self):
         self.fs_util.delete_fs_entity('')
@@ -752,12 +564,12 @@ class Kindle_history(Module):
                 getattr(test_class, method)
 
         # Config branch to execute:
-        elif len(cli_args) == 2 and cli_args[1].startswith(f'--{__Fs_utility.config_name}'):  # check for config flag
+        elif len(cli_args) == 2 and cli_args[1].startswith(f'--{_config_name}'):  # check for config flag
             cur_dir = os.listdir(Path('../..').absolute())
-            config: __Fs_utility.App_config | None = None
-            if __Fs_utility.config_name in cur_dir:
-                config_num = cur_dir.index(__Fs_utility.config_name)
-                config = __Fs_utility.App_config()
+            config: App_config | None = None
+            if _config_name in cur_dir:
+                config_num = cur_dir.index(_config_name)
+                config = App_config()
                 config.init_config(cur_dir[config_num])
                 global_logger.log('Config file founded')
                 if config.get_is_auto_mode():
@@ -765,7 +577,6 @@ class Kindle_history(Module):
                 else:
                     strat = ManualStrategy()
                 strat.do_algorithm()  # execute strategy
-                strat.fs_util.close_read_file()
             else:
                 raise Exception('Wrong config declaration, config not found')
 

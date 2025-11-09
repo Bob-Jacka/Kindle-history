@@ -2,18 +2,28 @@
 Module that responsible for interaction with file system on your pc
 """
 import csv
+import datetime
 import os
 import re
 import shutil
 import stat
+from enum import Enum
 from os import PathLike
+from pathlib import Path
 from sys import platform
 
 from core.entities.Formatter import Format
+from core.entities.PathFinder import (
+    get_central_dir_name
+)
 from core.other.Utils import (
     print_success,
     print_error,
     user_input_cursor
+)
+from data.Constants import (
+    global_logger,
+    NON_BOOK_EXTENSIONS
 )
 
 
@@ -31,6 +41,24 @@ class Json_helper:
 
 class Yaml_helper:
     pass
+
+
+class EBookManufacturer(Enum):
+    """
+    Enum with several e-book manufacturers
+    """
+    kindle = 'kindle',
+    onyx = 'onyx'
+    pocket_book = 'pocket_book'
+
+
+class OSType(Enum):
+    """
+    Enum with os identifiers that allowed in utility
+    """
+    windows_os = 'Windows',
+    linux_os = 'Linux',
+    mac_os = 'Mac_os'
 
 
 class File_controller:
@@ -61,17 +89,16 @@ class File_controller:
         with open(full_path, 'w+') as csvfile:
             csvwriter = csv.writer(csvfile, lineterminator='\n')
             row: list = list()  # row of the csv file.
-            images_path_dir: str = labels_dir_path + images_dir_name
             csvwriter.writerow(['Games', 'Value'])  # writes down headers to csv file.
-            for file_name in os.listdir(images_path_dir):
-                if file_name.endswith(success_img_indicator):
-                    label = test_labels['Success']  # 1 - value for success.
+            for file_name in os.listdir():
+                if file_name.endswith():
+                    # label = test_labels['Success']  # 1 - value for success.
                     row.append(file_name)
-                    row.append(label)
+                    # row.append(label)
                 elif file_name.endswith(failure_img_indicator):
-                    label = test_labels['Failed']  # 0 - value for failure.
+                    # label = test_labels['Failed']  # 0 - value for failure.
                     row.append(file_name)
-                    row.append(label)
+                    # row.append(label)
                 else:
                     print_error(
                         f'Unknown image identifier. Expected image ending with - {success_img_indicator} or {failure_img_indicator}.')
@@ -106,16 +133,16 @@ class File_controller:
         """
         global_logger.log('Backup books invoked')
         save_path: str | os.PathLike
-        if platform.system() == Fs_utility.OSType.windows_os:
+        if platform.system() == OSType.windows_os:
             save_path = Path.home().as_uri() + os.sep + 'Downloads'
             global_logger.log('Windows user path to Downloads')
-        elif platform.system() == Fs_utility.OSType.linux_os:
+        elif platform.system() == OSType.linux_os:
             save_path = Path.home().as_uri() + os.sep + 'Downloads'
             global_logger.log('Linux user path to Downloads')
         else:
             raise Exception('Unknown operating system, not implemented yet.')
 
-        for dir in os.listdir(central_dir):
+        for dir in os.listdir(get_central_dir_name()):
             self.copy_fs_entity(dir, save_path)
             global_logger.log(f'File - {dir} backed up in {save_path}')
 
@@ -176,7 +203,8 @@ class File_controller:
         :param dir_name: *optional parameter, special for directory copying. Use for creating new directory and copy all into
         :return: None
         """
-        # global_logger.log('Copy fs entity invoked')
+        global_logger.log('Copy fs entity invoked')
+        central_dir = get_central_dir_name()
         if path is not None:
 
             # file branch
@@ -185,7 +213,7 @@ class File_controller:
                     shutil.copy2(path, central_dir)  # {src} {dest}
                     Format.prGreen('Book save in central directory')
                 except Exception as e:
-            # global_logger.log(f'Error occurred while saving book in central dir - {e}')
+                    global_logger.log(f'Error occurred while saving book in central dir - {e}')
 
             # directory branch
             elif os.path.isdir(path):
@@ -195,15 +223,14 @@ class File_controller:
                     shutil.copytree(path, new_save_point_path, dirs_exist_ok=True)  # {src} {dest}
                     Format.prGreen('Directory save in central directory')
                 except Exception as e:
-            # global_logger.log(f'Error occurred while saving directory in central dir - {e}')
+                    global_logger.log(f'Error occurred while saving directory in central dir - {e}')
 
             else:
                 Format.prRed('Object type nor file or directory')
                 raise Exception(f'Cannot determine object type of {path}')
             self.delete_fs_entity(path)
         else:
-
-    # global_logger.log('Path cannot be None')
+            global_logger.log('Path cannot be None')
 
     def creation_date(self, path_to_file: str | os.PathLike) -> str:
         """
@@ -211,9 +238,9 @@ class File_controller:
         last modified if that isn't possible.
         See http://stackoverflow.com/a/39501288/1709587 for explanation.
         """
-        if platform.system() == Fs_utility.OSType.windows_os:
+        if platform.system() == OSType.windows_os:
             return str(os.path.getctime(path_to_file))
-        elif platform.system() == Fs_utility.OSType.linux_os:
+        elif platform.system() == OSType.linux_os:
             try:
                 mtime = os.path.getmtime(path_to_file)
                 mtime_readable = datetime.date.fromtimestamp(mtime)
@@ -223,7 +250,8 @@ class File_controller:
         else:
             raise NotImplemented('It seems that you have Mac operating system, not implemented for this system')
 
-    def is_book(self, name: str) -> bool:
+    @staticmethod
+    def is_book(name: str) -> bool:
         """
         Function for filtering directory for books
         :param name: name of the file to proceed
@@ -234,6 +262,37 @@ class File_controller:
             return False
         ext = ext[1:].lower()
         bad_ext_pat = re.compile(r'[^a-z0-9_]+')
-        if ext in self.non_ebook_extensions or bad_ext_pat.search(ext) is not None:
+        if ext in NON_BOOK_EXTENSIONS or bad_ext_pat.search(ext) is not None:
             return False
         return True
+
+    @staticmethod
+    def get_book_data_dirs_list() -> list:
+        """
+        Method for receiving book data (directories names with books, except home directory)
+        :return: list with strings (paths)
+        """
+        lst = os.listdir(Path('../../..'))  # go back, out of home directory.
+        central_dir = get_central_dir_name()
+        if central_dir in lst:
+            global_logger.log('Central dir removed from lst in get book data list')
+            lst.remove(central_dir)
+        else:
+            global_logger.log('Central dir is not in lst')
+        return lst
+
+    @staticmethod
+    def check_for_not_started():
+        """
+        Collect information about books that were not started and print them in console
+        :return: None
+        """
+        pass
+
+    @staticmethod
+    def check_for_started():
+        """
+        Collect information about books that were started and print them in console
+        :return: None
+        """
+        pass

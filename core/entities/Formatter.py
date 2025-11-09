@@ -62,7 +62,7 @@ class Format:
     def print_table(string: str):
         """
         Print given string in table view
-        :param string:
-        :return:
+        :param string: given string to print
+        :return: None
         """
         pass

@@ -1,0 +1,6 @@
+Architecture file for utility
+
+
+                                    Distribution manager (entry point)
+                                    /                |              \       #modulus
+                                  Book_db       Kindle_history      Transfer_book
