@@ -104,10 +104,9 @@ class Book_data:
         Decide if book is read by two parameters - 1) finished persent of book and 2) book status
         :return: tuple with parameters to decide.
         """
-        book_finish_reason: list = list()
         try:
             sdr_list = os.listdir(Path(self.get_save_point_path()))
-            lua_file: str
+            lua_file: str = ''
             for elem in sdr_list:
                 if elem.__contains__('metadata'):
                     lua_file = elem
@@ -123,7 +122,7 @@ class Book_data:
                 status_match = re.search(r'status\s*=\s*["\']([^"\']+)["\']', all_file)
                 status: str = status_match.group(1) if status_match else None
 
-            if len(book_finish_reason) == 3 and (percent_finished is not None and status is not None):
+            if percent_finished is not None and status is not None:
                 return True, percent_finished, status
             else:
                 return False, percent_finished, status
@@ -134,7 +133,6 @@ class Book_data:
     def decide_if_book_finished(lua_data: tuple[bool, float, str]) -> bool:
         """
         Decide if book is truly finished.
-
         :param lua_data: tuple with parameters to decide.
         :return: bool value of book finish.
         """
@@ -144,7 +142,7 @@ class Book_data:
         """
         Get book data from lua script in sdr directory.
         If value of print_or_get equal to True - print into console, False - get as a list of string
-        :param print_or_get: is need for print in console or get as a list.
+        :param print_or_get: is need for print in console or get as a list object.
         :return: None (if value printed) or list with lua script lines
         """
         try:
@@ -166,3 +164,15 @@ class Book_data:
                     return all_file
         except Exception as e:
             print(f'Exception while getting path to lua script - {e}')
+
+    def get_short_name(self):
+        """
+        Get book name in short notation.
+        :return: Book name
+        """
+        short_book_name: str
+        if len(self.book_name) > 80:
+            short_book_name = copy(self.book_name)[0:80] + '...'
+        else:
+            short_book_name = copy(self.book_name)
+        return short_book_name

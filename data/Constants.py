@@ -43,10 +43,3 @@ Also known as Bob-jacka (Cupcake_wrld)
 """
 
 APP_VERSION: Final[str] = '3.2.0'
-
-global_logger: Final[BotLogger] = BotLogger()
-"""
-Global instance of logger class.
-Change logger parameter to turn on logs in console.
-Logger creates in different branches of app execution.
-"""

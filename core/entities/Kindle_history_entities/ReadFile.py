@@ -12,6 +12,7 @@ class ReadFile:
     def __init__(self, filename: str | Path):
         self.readfile = open(filename)
         self.fullpath_to_readfile = self.get_fullpath_to_readfile()
+        self.book_county = 0
 
     def is_need_for_new_line(self) -> bool:
         """
@@ -73,12 +74,12 @@ class ReadFile:
     def close_read_file(self):
         self.readfile.close()
 
-    def add_book(self):
+    def add_book(self, book_data):
         """
         Add book to read book file
         :return: None
         """
-        pass
+        self.readfile.write(book_data)
 
     def remove_book(self):
         """
@@ -88,8 +89,23 @@ class ReadFile:
         pass
 
     def get_fullpath_to_readfile(self):
-        #TODO переделать
+        # TODO переделать
         if self.fullpath_to_readfile is not None:
             return self.fullpath_to_readfile
         else:
             raise Exception('File with read books is not initialized')
+
+    def count_books(self):
+        """
+        Function for count books in read file if exists
+        :return: book count in terminal
+        """
+        if self.book_county != 0:
+            book_counter = 0
+            for line in self.readfile:
+                if line != '\n':
+                    book_counter += 1
+                self.book_county = book_counter
+                print(f'Books count is - {Format.underline_start + str(book_counter) + Format.underline_end}')
+        else:
+            print(f'Books count is - {Format.underline_start + str(self.book_county) + Format.underline_end}')

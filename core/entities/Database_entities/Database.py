@@ -1,4 +1,5 @@
 import os
+import types
 from typing import (
     TypeVar,
     Generic,
@@ -6,7 +7,7 @@ from typing import (
 )
 
 from core.exceptions.DatabaseException import DatabaseException
-from core.modules.Book_db import cancelable_operation, log
+from data.Wrappers import cancelable_operation, log
 
 
 class _Record:
@@ -53,10 +54,10 @@ class _Record:
 
     def print_object(self):
         print(f'''
-                            Book name: {self.book_name},
-                            Book category: {self.book_category},
-                            Book read date: {self.read_date}
-                            ''')
+        Book name: {self.book_name},
+        Book category: {self.book_category},
+        Book read date: {self.read_date}
+        ''')
 
 
 T = TypeVar('T')  # Generic type of table

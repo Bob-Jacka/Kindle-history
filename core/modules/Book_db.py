@@ -19,6 +19,7 @@ from typing import (
 )
 
 from core.entities.AbstractModule import Module
+from core.entities.Database_entities.Database import _Database
 from core.exceptions.DatabaseException import (
     SyntaxInterpreterException
 )
@@ -49,6 +50,11 @@ class Book_db(Module):
         Interpreter for BQL (book query language).
         Map contains key for fast retrieving element and tuple with two fields, where first field is syntax word
         and second field is help description for words and its usage.
+                Order of execution:
+            1. first you need to create database object
+            2. second create tables in your database
+            3. and last create records in tables
+            4. And fourth, use it...
         """
         __syntax_rules: Final[dict[str, tuple[str, str]]] = {
             # main operators in database:
@@ -68,7 +74,7 @@ class Book_db(Module):
             'help': tuple(('help', 'special operator for help users in their usage of BQL syntax')),
             'all': tuple(('all', 'special word for selecting or deleting all records in database')),
             'in': tuple(('in', 'like "from" word in sql')),
-            'using': tuple(('using', '')),
+            'using': tuple(('using', 'use this word for use database as a main database')),
 
             # entity words:
             'database': tuple(('database', 'word for creating database')),
@@ -103,44 +109,32 @@ class Book_db(Module):
         Other examples: Choose all in Table(name="math", order=desk, limit=10) - descending select from all from 
         table named math and limit by 10 records"""
 
-        class _Database_core:
-            """
-            Order of execution:
-            1. first you need to create database object
-            2. second create tables in your database
-            3. and last create records in tables
-            4. And fourth, use it...
-            """
-
-            def __init__(self):
-                self.databases: list = list()
-
-            @cancelable_operation
-            def _create_database(self, db_name: str) -> None:
-                try:
-                    new_database = Database(db_name)
-                    self.databases.append(new_database)
-                except Exception as e:
-                    print()
-
-            @cancelable_operation
-            def synchronize(self) -> None:
-                """
-                Method for synchronizing e-book files and database tables
-                :return: None
-                """
-                pass
-
-            @log
-            def get_database(self):
-                if len(self.databases) != 0:
-                    return self.databases
-                else:
-                    raise
-
         def __int__(self):
             # Interpreter entities init:
-            self.database_core = self._Database_core()
+            self.databases: list = list()
+
+        @cancelable_operation
+        def _create_database(self, db_name: str) -> None:
+            try:
+                new_database = _Database(db_name)
+                self.databases.append(new_database)
+            except Exception as e:
+                print(f'An exception occurred while creating database - {e}')
+
+        @cancelable_operation
+        def synchronize(self) -> None:
+            """
+            Method for synchronizing e-book files and database tables
+            :return: None
+            """
+            pass
+
+        @log
+        def get_database(self):
+            if len(self.databases) != 0:
+                return self.databases
+            else:
+                raise
 
         @log
         def parse_sentence(self, sentence: str) -> None:
@@ -194,7 +188,7 @@ class Book_db(Module):
 
         @log
         def __parse_sync_operator(self):
-            self.database_core.synchronize()
+            self.synchronize()
 
         @log
         def print_help(self):
@@ -205,7 +199,7 @@ class Book_db(Module):
 
     def __init__(self, is_interactive_mode: bool = None, start_point: str | PathLike = '.'):
         self.is_interactive = is_interactive_mode
-        self.syntax_interpreter = self.Syntax_interpreter()
+        self.__syntax_interpreter = self.Syntax_interpreter()
         self.start_point = start_point
 
     @staticmethod
@@ -224,7 +218,7 @@ class Book_db(Module):
             user_command_line = input()
             if user_command_line != '':
                 if user_command_line != 'close':
-                    self.syntax_interpreter.parse_sentence(user_command_line)
+                    self.__syntax_interpreter.parse_sentence(user_command_line)
                 else:
                     print('Close cli connection to database')
                     break
