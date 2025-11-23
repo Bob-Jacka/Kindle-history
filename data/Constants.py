@@ -32,14 +32,14 @@ CLOSE_MENU_CODE: Final[str] = '666'
 Code for close menu functionality
 """
 
-STATIC_FILE_NAME_WITH_READ: Final[str] = 'read.txt'
-"""
-Static file name of the read file.
-"""
-
 AUTHOR: Final[str] = 'KIRILL'
 """
 Also known as Bob-jacka (Cupcake_wrld)
+"""
+
+APP_NAME: Final[str] = 'BookManager'
+"""
+Name of the app
 """
 
 APP_VERSION: Final[str] = '3.2.0'

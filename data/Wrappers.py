@@ -1,40 +1,28 @@
 import datetime
 from typing import (
     Any,
-    Final,
     Callable
 )
 
-LOG_FILE_NAME: Final[str] = f'db_logs_{datetime.datetime.now()}.log'
 
-
-def log(is_file_write: bool = False) -> Callable:
+def log(function) -> Callable:
     """
     Record database function invocation with time and date.
     Can write invocation to file.
-    :param is_file_write: is need for file output
+    :param function: function object to invoke
     :return: Decorator function
     """
 
-    def decorator(function):
-        def wrapper(*args, **kwargs) -> Any:
-            log_msg: str = f'[{datetime.datetime.now()}]: invoked database function with name: "{function.__name__}"'
-            print(log_msg)
-            r = function(*args, **kwargs)
-            if is_file_write:
-                try:
-                    with open(LOG_FILE_NAME, 'a') as log_file:
-                        log_file.write(log_msg + '\n')
-                except IOError as e:
-                    print(f"Ошибка записи в лог-файл: {e}")
-            return r
+    def wrapper(*args, **kwargs) -> Any:
+        log_msg: str = f'[{datetime.datetime.now()}]: invoked function with name: "{function.__name__}"'
+        colored_formated_msg = '\033[97m' + log_msg + '\033[00m'
+        print(colored_formated_msg)
+        r = function(*args, **kwargs)
+        return r
 
-        return wrapper
-
-    return decorator
+    return wrapper
 
 
-@log
 def cancelable_operation(function):
     """
     Cancel operation due to errors and restore previous condition.

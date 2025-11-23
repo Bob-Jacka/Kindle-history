@@ -1,10 +1,10 @@
+import abc
 from abc import (
-    ABC,
     abstractmethod
 )
 
 
-class Module(ABC):
+class Module(abc.ABC):
 
     @abstractmethod
     def run_module(self) -> None:

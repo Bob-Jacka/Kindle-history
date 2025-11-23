@@ -3,12 +3,16 @@ Kindle history module
 Store your read books in file or delete already read book from your e-book, like Kindle
 
 Module gives you an interactive way of using your e-book
+
+*Module only responsible for read file actions
 """
+from core.other.Utils import str_input_from_user
+from data.Wrappers import log
 
 try:
-    from core.entities.Kindle_history_entities.Book_dir_controller import Book_dir_controller
+    from core.entities.Book_dir_controller import Book_dir_controller
     from core.entities.Kindle_history_entities.Book_data import Book_data
-    from core.entities.File_controller import File_controller
+    from core.entities.Database_entities.File_controller import File_controller
     from data.Constants import (
         INPUT_SYM,
         CLOSE_MENU_CODE
@@ -76,6 +80,7 @@ class Strategy(abc.ABC):
         else:
             self.local_logger.log("Logger is None")
 
+    @log
     def app_settings_menu(self) -> None:
         """
         Menu with app settings.
@@ -204,6 +209,7 @@ class AutoStrategy(Strategy):
                 self.local_logger.log(f'Exception occurred in Main cycle of the program - {e}')
                 exit(1)
 
+    @log
     @override
     def add_new_book(self, book: Book_data) -> None:
         """
@@ -229,6 +235,7 @@ class AutoStrategy(Strategy):
             except Exception as e:
                 self.local_logger.log(f'Exception while adding new book - {e}')
 
+    @log
     def __auto_process_books(self, path_to_process='..') -> None:
         """
         Main method of the auto strategy class.
@@ -296,7 +303,7 @@ class ManualStrategy(Strategy):
             print('2) App setting...')
             print('3) List all files (only books files) in directory')
             print('4) List favourite books (in home directory)')
-            print('5) Exit app')
+            print('5) Exit menu')
             Format.prYellow('Choose action by entering number')
             try:
                 act_num: int = int(input(INPUT_SYM))
@@ -311,8 +318,8 @@ class ManualStrategy(Strategy):
                         case 4:
                             self.__list_favourite_books()
                         case 5:
-                            print('Out app, bye!')
-                            exit(0)
+                            print('Out menu, bye!')
+                            break
                         case _:
                             Format.prRed('Wrong choice, try again')
                             continue
@@ -415,6 +422,7 @@ class ManualStrategy(Strategy):
         else:
             print('There are no favourite or just simple books!')
 
+    @log
     @override
     def add_new_book(self, book_data: Book_data):
         """
@@ -497,24 +505,23 @@ class Kindle_history_test:
 
 class Kindle_history(Module):
 
-    def __init__(self, app_config, readFile):
+    def __init__(self, app_config, readFile, cli_parameters: list[str]):
         self.config = app_config
         self.readFile = readFile
+        self.parameters = cli_parameters
 
+    @log
     def run_module(self):
         """
         Run kindle history module
         :return: None
         """
-        cli_args = sys.argv  # get cli arguments
-
         # Manual or auto branch to execute:
-        if len(cli_args) == 1:  # run without arguments
-            del cli_args
+        if len(self.parameters) == 0:  # run without arguments
             strat: Strategy | None = None
             Format.prYellow('Auto mode - yes (y) or no (n):')
             while True:
-                mode_user_input = str(input(INPUT_SYM))
+                mode_user_input = str_input_from_user()
                 if mode_user_input is not None:
                     if mode_user_input == 'yes' or mode_user_input == 'y':
                         strat = AutoStrategy(self.readFile, self.config)
@@ -535,7 +542,7 @@ class Kindle_history(Module):
                 print(f'Error occurred in main logic start algorithm - {e}')
 
         # Test branch to execute:
-        elif len(cli_args) == 2 and cli_args[1] == 'test':  # static name of the test mode
+        elif len(self.parameters) == 2 and self.parameters[1] == 'test':  # static name of the test mode
             test_class = Kindle_history_test()
             methods = [name for name, value in
                        inspect.getmembers(Kindle_history_test, inspect.isfunction) if

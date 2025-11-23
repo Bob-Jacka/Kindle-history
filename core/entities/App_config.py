@@ -6,8 +6,6 @@ from core.entities.BotLogger import BotLogger
 from core.entities.Formatter import Format
 from data.Constants import INPUT_SYM
 
-_config_name: str = 'config.txt'
-
 
 class App_config:
     """
@@ -18,7 +16,12 @@ class App_config:
 
     __read_book_file: str
     """
-    Name of the file with read book.
+    Default name of the file with read book.
+    """
+
+    __config_name: str
+    """
+    Default name of the config file
     """
 
     __is_auto_mode: bool
@@ -54,16 +57,17 @@ class App_config:
     Logger creates in different branches of app execution.
     """
 
-    def __init__(self, read_book_file_name: str = '', is_auto: bool = False, is_logs: bool = False,
-                 exclude_dirs: list = None):
+    def __init__(self, read_book_file_name: str = 'read.txt', config_file_name: str = 'config.txt',
+                 is_auto: bool = True, is_logs: bool = False, exclude_dirs: list = None):
+
         self.__read_book_file = read_book_file_name
-        self.__is_auto_mode = is_auto
+        self.__config_name = config_file_name
+        self.__is_auto_mode = is_auto  # also used for interactive or not mode
         self.__is_enable_logs = is_logs
         self.__exclude_directories = exclude_dirs
         self.__central_dir = os.getcwd()  # get current directory
         self.__current_dir = self.__central_dir
 
-    @staticmethod
     def get_help_config(self) -> None:
         print('App config help.')
         print('Config can contain next parameters:')
@@ -78,7 +82,7 @@ class App_config:
         print('is_auto_mode: <true or false values>')
         print('is_enable_logs: <true or false values>')
         print('exclude_directories: <one_dir_name, second_dir_name, third_dir_name> (list with dirs names)')
-        if not os.path.exists(_config_name):
+        if not os.path.exists(self.__config_name):
             print('Config is not exits')
             while True:
                 print('Would you like to create test config file in this directory - yes (y) or no (n)?')
@@ -120,6 +124,12 @@ class App_config:
     def get_read_file_name(self):
         if self.__read_book_file is not None:
             return self.__read_book_file
+        else:
+            raise Exception('Try to get null value')
+
+    def get_config_file_name(self):
+        if self.__config_name is not None:
+            return self.__config_name
         else:
             raise Exception('Try to get null value')
 
@@ -196,14 +206,13 @@ class App_config:
                     self.__global_logger.log('Close menu')
                     break
 
-    @staticmethod
-    def create_tmp_config():
+    def create_tmp_config(self):
         """
         Creates config if you cannot do it by yourself.
         :return: None
         """
         try:
-            with open(_config_name, 'w+') as tmp_config:
+            with open(self.__config_name, 'w+') as tmp_config:
                 tmp_config.write('read_book_file_name: read.txt')
                 tmp_config.write('\n')
                 tmp_config.write('is_auto_mode: false')

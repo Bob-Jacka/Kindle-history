@@ -22,7 +22,7 @@ Extension of the file with bookmarks in cracked Kindle device.
 
 class Book_data:
     """
-    Class for encapsulating book data.
+    Class for encapsulating book data for Kindle_history module.
     Include dir where book stored and its name.
     """
 

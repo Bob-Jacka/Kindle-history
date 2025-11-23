@@ -25,6 +25,10 @@ class OSType(Enum):
 
 class Book_dir_node:
     def __init__(self, dir_name: str):
+        """
+        Class for directore with books
+        :param dir_name: directory name to store in node
+        """
         self.dir_name: str = dir_name
         self.book_names: list[str] = list()
         for book in os.listdir():
@@ -33,8 +37,10 @@ class Book_dir_node:
 
     def list_books_in_node(self):
         print('Directory contains such books:')
+        counter = 0
         for book in self.book_names:
-            print(book)
+            print(f'{counter}: {book}')
+            counter += 1
 
     def get_dir_name(self):
         return self.dir_name
@@ -49,11 +55,40 @@ class Book_dir_node:
         return list_to_return
 
 
-class Book_dir_controller:
+class Book_data_adapter:
+    """
+    Adapter entity for Book_data in Kindle_history module and Record in Book_db module
+    """
 
-    def __init__(self, config, logger=None):
+    def __init__(self, obj, **adapted_methods):
+        """
+        We set the adapted methods in the object's dict
+        :param obj object to adapt
+        """
+        self.obj = obj
+        self.__dict__.update(adapted_methods)
+
+    def __getattr__(self, attr):
+        """All non-adapted calls are passed to the object"""
+        return getattr(self.obj, attr)
+
+    def original_dict(self):
+        """Print original object dict"""
+        return self.obj.__dict__
+
+
+class Book_dir_controller:
+    """
+    Controller for books actions, Data independent
+    """
+
+    def __init__(self, config):
+        """
+        Class responsible for directory controller
+        :param config: file with configuration
+        """
         self.dirs: list[Book_dir_node] = list()
-        self.local_logger = logger
+        self.local_logger = config.get_logger()
         self.config = config
         for dir_name in os.listdir():
             if dir_name.endswith('') and not dir_name.startswith('.'):
@@ -81,10 +116,10 @@ class Book_dir_controller:
         save_path: str | os.PathLike
         if platform.system() == OSType.windows_os:
             save_path = Path.home().as_uri() + os.sep + 'Downloads'
-            self.local_logger.log('Windows user path to Downloads')
+            self.local_logger.log('Windows user path to Downloads directory')
         elif platform.system() == OSType.linux_os:
             save_path = Path.home().as_uri() + os.sep + 'Downloads'
-            self.local_logger.log('Linux user path to Downloads')
+            self.local_logger.log('Linux user path to Downloads directory')
         else:
             raise Exception('Unknown operating system, not implemented yet.')
 
@@ -176,6 +211,13 @@ class Book_dir_controller:
             self.delete_fs_entity(path)
         else:
             self.local_logger.log('Path cannot be None')
+
+    def create_directory(self, dir_data):
+        """
+        Create directory, used in Book_db
+        :return:
+        """
+        pass
 
     def creation_date(self, path_to_file: str | os.PathLike) -> str:
         """

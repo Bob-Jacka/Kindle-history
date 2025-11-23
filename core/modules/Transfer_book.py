@@ -1,8 +1,11 @@
 """"
 Module for book transferring from your (maybe not your) pc to your (maybe not your) e-book
+
+*Module only responsible for transfer books from pc to ebook
 """
 
 from core.entities.AbstractModule import Module
+from data.Wrappers import log
 
 
 class Transfer_book_tests:
@@ -19,15 +22,19 @@ class Transfer_book(Module):
     Use ftp or tcp to transfer books to calibre book manager
     """
 
-    def __init__(self):
-        pass
+    def __init__(self, app_config):
+        self.config = app_config
+        self.local_logger = app_config.get_logger()
 
+    @log
     def transfer_with_ftp(self):
         pass
 
+    @log
     def transfer_with_tcp(self):
         pass
 
+    @log
     def run_module(self):
         """
         Run transfer book module.
@@ -35,15 +42,12 @@ class Transfer_book(Module):
         """
         while True:
             print('Enter module number to use it')
-            print('1. Kindle history module - to store your read books')
-            print('2. Transfer book - to transfer your books from pc to e-book')
-            print('3. Exit - to exit from utility')
+            print('1. Transfer book')
+            print('2. Exit - to exit from utility')
             transfer_action = int(input('>> '))
             match transfer_action:
                 case 1:
                     pass
                 case 2:
-                    pass
-                case 3:
                     print('Bye')
                     exit(0)
