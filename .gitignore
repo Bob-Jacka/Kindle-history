@@ -1,0 +1,4 @@
+.venv
+test_data
+core/entities/read.txt
+core/other/TODO.txt

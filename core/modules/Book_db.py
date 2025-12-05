@@ -13,21 +13,11 @@ Contains CRUD action list for using and some special syntax to use interactive
 *Module is only responsible for books on your e-book
 """
 
-import enum
-
-from core.entities.AbstractModule import Module
-from core.entities.Database_entities.BQL_core import Syntax_interpreter
+from core.entities.console.AbstractModule import Module
+from core.entities.console.Database_entities.BQL_core import Syntax_interpreter
 from core.other.Utils import str_input_from_user
 from data.Constants import INPUT_SYM
 from data.Wrappers import log
-
-
-class __Book_db_translation(enum.Enum):
-    """
-    Translation unit for book db.
-    Localizes database syntax
-    """
-    pass
 
 
 class Book_db(Module):

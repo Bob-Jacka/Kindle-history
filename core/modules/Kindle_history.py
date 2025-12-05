@@ -10,9 +10,9 @@ from core.other.Utils import str_input_from_user
 from data.Wrappers import log
 
 try:
-    from core.entities.Book_dir_controller import Book_dir_controller
-    from core.entities.Kindle_history_entities.Book_data import Book_data
-    from core.entities.Database_entities.File_controller import File_controller
+    from core.entities.console.Book_dir_controller import Book_dir_controller
+    from core.entities.console.Kindle_history_entities.Book_data import Book_data
+    from core.entities.console.Database_entities.File_controller import File_controller
     from data.Constants import (
         INPUT_SYM,
         CLOSE_MENU_CODE
@@ -21,7 +21,7 @@ try:
     from core.entities.Formatter import Format
     from enum import Enum
 
-    from core.entities.AbstractModule import Module
+    from core.entities.console.AbstractModule import Module
 
     import datetime
     import inspect

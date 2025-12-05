@@ -4,7 +4,7 @@ Module for book transferring from your (maybe not your) pc to your (maybe not yo
 *Module only responsible for transfer books from pc to ebook
 """
 
-from core.entities.AbstractModule import Module
+from core.entities.console.AbstractModule import Module
 from data.Wrappers import log
 
 

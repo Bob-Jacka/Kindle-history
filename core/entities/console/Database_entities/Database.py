@@ -1,7 +1,7 @@
 import os
 import types
 
-from core.entities.Database_entities.Table import _Table
+from core.entities.console.Database_entities.Table import _Table
 from core.exceptions.DatabaseException import DatabaseException
 from data.Wrappers import cancelable_operation, log
 

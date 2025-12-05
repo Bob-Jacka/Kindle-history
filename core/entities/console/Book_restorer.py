@@ -216,7 +216,7 @@ class Restore(Thread):
                         else:
                             args.append(cfm[x])
                 if len(args) == len(fields):
-                    # TODO: Do series type columns need special handling?
+                    # TODO.txt: Do series type columns need special handling?
                     label = cfm['label']
                     if label in self.custom_columns and args != self.custom_columns[label]:
                         if label not in self.conflicting_custom_cols:

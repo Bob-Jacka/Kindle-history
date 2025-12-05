@@ -89,7 +89,7 @@ class ReadFile:
         pass
 
     def get_fullpath_to_readfile(self):
-        # TODO переделать
+        # TODO.txt переделать
         if self.fullpath_to_readfile is not None:
             return self.fullpath_to_readfile
         else:

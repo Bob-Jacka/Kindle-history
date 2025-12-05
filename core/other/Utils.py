@@ -1,7 +1,5 @@
 import io
 import os
-import sys
-import time
 from os.path import exists
 
 from termcolor import colored
@@ -11,7 +9,7 @@ user_input_cursor: str = '>> '
 
 def select_terminal(items_directory_path: str, is_full_path_ret: bool = False) -> str | os.PathLike | None:
     """
-    Selects item to be proceeded in neuro network.
+    Selects item to be proceeded in terminal.
     Supports "exit" directive.
     :param is_full_path_ret: indicates if you need full path to directory or not.
     :param items_directory_path: directory where you need terminal.
@@ -139,7 +137,6 @@ def is_binary(stream):
     if mode:
         return 'b' in mode
     return not isinstance(stream, io.TextIOBase)
-
 
 # def prints(*a, **kw):
 #     """

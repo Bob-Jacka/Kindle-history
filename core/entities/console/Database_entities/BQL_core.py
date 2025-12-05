@@ -5,7 +5,7 @@ Dummy syntax interpreter for BQ language in this file
 
 from typing import Final
 
-from core.entities.Database_entities.Database import Database
+from core.entities.console.Database_entities.Database import Database
 from core.exceptions.DatabaseException import SyntaxInterpreterException
 from data.Wrappers import log, cancelable_operation
 

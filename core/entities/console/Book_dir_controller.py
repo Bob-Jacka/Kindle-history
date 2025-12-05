@@ -7,7 +7,7 @@ from enum import Enum
 from pathlib import Path
 
 from core.entities.Formatter import Format
-from core.entities.Kindle_history_entities.Book_data import Book_data
+from core.entities.console.Kindle_history_entities.Book_data import Book_data
 from data.Constants import (
     NON_BOOK_EXTENSIONS,
     INPUT_SYM
