@@ -22,7 +22,12 @@ class Transfer_book(Module):
     Use ftp or tcp to transfer books to calibre book manager
     """
 
-    def __init__(self, app_config):
+    def __init__(self):
+        self.local_logger = None
+        self.config = None
+
+    @log
+    def post_init(self, app_config):
         self.config = app_config
         self.local_logger = app_config.get_logger()
 

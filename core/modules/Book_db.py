@@ -25,9 +25,17 @@ class Book_db(Module):
     Custom nosql database for storing information about books on your e-book
     """
 
-    def __init__(self, app_config):
-        self.__is_interactive = app_config.get_is_auto_mode()
+    def __init__(self):
+        self.__local_logger = None
+        self.__start_point = None
+        self.config = None
+        self.__is_interactive = None
         self.__syntax_interpreter = Syntax_interpreter()
+
+    @log
+    def post_init(self, app_config):
+        self.config = app_config
+        self.__is_interactive = app_config.get_is_auto_mode()
         self.__start_point = app_config.get_central_dir_name()
         self.__local_logger = app_config.get_logger()
 

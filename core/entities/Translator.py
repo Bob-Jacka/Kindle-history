@@ -1,3 +1,6 @@
+import translators
+
+
 class SingletonTranslator(type):
     _instances = {}
 
@@ -13,4 +16,15 @@ class Translator:
         """
         Class for translations in utility
         """
-        pass
+        self.translate_serv = translators.server.TranslatorsServer()
+        if self.translate_serv is not None:
+            self.system_lang = translators.get_region_of_server(if_print_region=False)
+
+    def translate(self, string_to_translate: str):
+        if string_to_translate is not None:
+            return self.translate_serv.translateMe(
+                string_to_translate,
+                to_language=self.system_lang
+            )
+        else:
+            print('String to translate cannot be none')

@@ -1,4 +1,5 @@
 import os
+from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 from typing import Final
@@ -17,9 +18,10 @@ class Config_param_names(Enum):
     ENABLE_LOGS = 'is_enable_logs'
     EXCLUDE_DIRS = 'exclude_directories'
     CENTRAL_DIR = 'central_dir'
+    APP_MODE = 'app_mode'
 
 
-# noinspection PyPackageRequirements
+@dataclass
 class App_config:
     """
     Class for configuration application with parameters.
@@ -73,7 +75,8 @@ class App_config:
     def __init__(self, read_book_file_name: str = 'read.txt', config_file_name: str = 'config.txt',
                  is_auto: bool = True, is_logs: bool = False, exclude_dirs: list = None):
         # Main config parameters:
-        self.__central_dir = Path(os.getcwd()).parent.parent.parent.absolute().as_posix()  # get current directory
+        self.app_mode = None
+        self.__central_dir = self.get_real_path()  # get current directory
         self.__current_dir = self.__central_dir
 
         # Other config parameters:
@@ -135,6 +138,8 @@ class App_config:
                             self.__exclude_directories = list(value)
                         elif line.startswith(Config_param_names.CENTRAL_DIR.value):
                             self.__central_dir = value
+                        elif line.startswith(Config_param_names.APP_MODE.value):
+                            self.app_mode = value
                         else:
                             raise Exception(f'Wrong config parameter - {line}')
                     else:
@@ -205,7 +210,8 @@ class App_config:
         Move lower in file system tree
         :return: None
         """
-        p = Path('../../..')  # check current directory TODO.txt может быть проблема с тем, что я до этого в конструкторе нашел родителя родителя
+        p = Path(
+            '../../..')  # check current directory
         dir_list = [x for x in p.iterdir() if x.is_dir()]
         Format.prGreen('Available directories:')
         if len(dir_list) == 0:
@@ -260,4 +266,7 @@ class App_config:
         :param end_with: value that will be inserted at back of the path
         :return: string value, representing path in your system
         """
-        return Path(os.getcwd()).parent.parent.parent.absolute().as_posix() + os.sep + end_with
+        return Path(os.getcwd()).parent.absolute().as_posix() + os.sep + end_with
+
+    def get_app_mode(self):
+        return self.app_mode

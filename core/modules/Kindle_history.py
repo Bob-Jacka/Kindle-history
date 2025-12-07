@@ -505,10 +505,15 @@ class Kindle_history_test:
 
 class Kindle_history(Module):
 
-    def __init__(self, app_config, readFile, cli_parameters: list[str]):
-        self.config = app_config
-        self.readFile = readFile
+    def __init__(self, cli_parameters: list[str]):
+        self.config = None
+        self.readFile = None
         self.parameters = cli_parameters
+
+    @log
+    def post_init(self, app_config):
+        self.config = app_config
+        self.readFile = app_config.get_read_file_name()
 
     @log
     def run_module(self):

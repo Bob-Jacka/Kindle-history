@@ -10,11 +10,14 @@ from data.Wrappers import log
 
 class Setting(Module):
 
-    def __init__(self, app_config):
+    def __init__(self):
         """
         Settings module
-        :param app_config: config of the application
         """
+        self.config = None
+
+    @log
+    def post_init(self, app_config):
         self.config = app_config
 
     @log
