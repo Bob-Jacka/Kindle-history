@@ -48,7 +48,7 @@ def __init_app() -> None:
             Format.prYellow('Would you like to create file with read books? (yes(y) /no (n))')
             user_choice = input(INPUT_SYM)
             if user_choice == 'yes' or user_choice == 'y':
-                os.mknod(__app_config.get_central_dir_name() + os.sep + STATIC_READ_FILE_NAME)
+                os.mknod(current_dir + os.sep + STATIC_READ_FILE_NAME)
                 __global_logger.log('File for your book history created!')
             else:
                 __global_logger.log('Read file not found or create')
@@ -69,11 +69,11 @@ def __init_app_entities():
         __translator = Translator()
     except Exception as e:
         print(f'Error in initializing app entities - {e}')
-        raise Exception('App initialization failed')
+        raise Exception(f'App initialization failed due to {e}')
 
 
 def __start_app():
-    mode: bool = __app_config.get_app_mode()
+    mode: bool = __app_config.get_app_mode()  # check for utility mode to run
 
     global __console_process, __browser_process
     # Upper level error handling
@@ -87,16 +87,17 @@ def __start_app():
             __browser_process.start()
 
     except Exception as e:
-        __global_logger.log(f'An exception occurred during initialization - {e}')
-        raise Exception('Start app functionality failed')
+        __global_logger.log(f'An exception occurred during app initialization - {e}')
+        raise Exception(f'Start app functionality failed due to - {e}')
 
 
 def __clean_app_entities():
     global __global_logger, __translator, __console_process, __browser_process
     if __console_process is not None or __browser_process is not None:
-        if __console_process.is_alive() or __browser_process.is_alive():
+        if __console_process.is_alive():
             __console_process.close()
             __global_logger.log('Console process closed')
+        if __browser_process.is_alive():
             __browser_process.close()
             __global_logger.log('Browser process closed')
         __global_logger = None
@@ -106,11 +107,11 @@ def __clean_app_entities():
 if __name__ == '__main__':
     try:
         print(f'"{APP_NAME}" utility starting')
-        __init_app()
         __init_app_entities()
+        __init_app()
         __start_app()
     except Exception as e:
-        print('All functionality failed, app exiting')
+        print(f'All functionality failed with exception - {e}, app exiting')
         __clean_app_entities()
     print(f'"{APP_NAME}" utility ending work, bye')
     exit(1)

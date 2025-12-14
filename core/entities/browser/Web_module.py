@@ -1,4 +1,3 @@
-import multiprocessing
 import os
 
 PYTHON_INTERPRETER = 'python'

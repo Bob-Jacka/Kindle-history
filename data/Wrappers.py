@@ -5,9 +5,28 @@ from typing import (
 )
 
 
-def log(function) -> Callable:
+def safe_log(function) -> Callable:
     """
-    Record database function invocation with time and date.
+    Log function execution with try/except block
+    :param function: function object to invoke
+    :return: Decorator function
+    """
+
+    def wrapper(*args, **kwargs) -> Any:
+        log_msg: str = f'[{datetime.datetime.now()}]: invoked function with name: "{function.__name__}"'
+        print('\033[97m' + log_msg + '\033[00m')
+        try:
+            r = function(*args, **kwargs)
+            return r
+        except Exception as e:
+            print(f'[{datetime.datetime.now()}]: An exception occurred while function invoke: {e} ""')
+
+    return wrapper
+
+
+def write_log(function) -> Callable:
+    """
+    Log function execution and write to file.
     Can write invocation to file.
     :param function: function object to invoke
     :return: Decorator function
@@ -15,8 +34,25 @@ def log(function) -> Callable:
 
     def wrapper(*args, **kwargs) -> Any:
         log_msg: str = f'[{datetime.datetime.now()}]: invoked function with name: "{function.__name__}"'
-        colored_formated_msg = '\033[97m' + log_msg + '\033[00m'
-        print(colored_formated_msg)
+        print('\033[97m' + log_msg + '\033[00m')
+        r = function(*args, **kwargs)
+        with open('logfile.log') as log_file:
+            log_file.write(log_msg + '\n')
+        return r
+
+    return wrapper
+
+
+def log(function) -> Callable:
+    """
+    Record database function invocation with time and date.
+    :param function: function object to invoke
+    :return: Decorator function
+    """
+
+    def wrapper(*args, **kwargs) -> Any:
+        log_msg: str = f'[{datetime.datetime.now()}]: invoked function with name: "{function.__name__}"'
+        print('\033[97m' + log_msg + '\033[00m')
         r = function(*args, **kwargs)
         return r
 
