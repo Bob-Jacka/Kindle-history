@@ -41,4 +41,4 @@ STATIC_CONFIG_NAME: Final[str] = 'config.txt'
 
 STATIC_READ_FILE_NAME: Final[str] = 'read.txt'
 
-APP_VERSION: Final[str] = '4.0.0'
+APP_VERSION: Final[str] = '4.1.0'
