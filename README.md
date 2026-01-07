@@ -46,3 +46,9 @@ module for transferring books from your local personal computer to e-book by tcp
 
 1. TCP mode
 2. FTP mode
+
+### Book analytic:
+
+module for analytic
+
+#### module methods:

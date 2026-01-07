@@ -112,7 +112,7 @@ class App_config:
                 else:
                     break
 
-    def path_to_read_file(self):
+    def path_to_read_file(self) -> str:
         return self.__central_dir + self.__read_book_file
 
     def init_config(self, config_file_name: str) -> None:

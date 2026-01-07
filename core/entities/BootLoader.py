@@ -5,6 +5,7 @@ Entry point to utility and modules, contains global data from modules
 import os
 
 from core.entities.browser.Web_module import Web_interface
+from core.modules.Book_analytic import Book_analytic
 from core.modules.Book_db import Book_db
 from core.modules.Kindle_history import Kindle_history
 from core.modules.Settings import Setting
@@ -28,12 +29,18 @@ class BootLoader:
         self.book_db_module: Book_db = Book_db()
         self.transfer_module: Transfer_book = Transfer_book()
         self.settings_module: Setting = Setting()
+        self.analytic_module: Book_analytic = Book_analytic()
 
-    def init_app_entities(self):
+    def __init_app_entities(self):
+        """
+        Init modules with config entity
+        :return: None
+        """
         self.history_module.post_init(self.app_config)
         self.book_db_module.post_init(self.app_config)
         self.settings_module.post_init(self.app_config)
         self.transfer_module.post_init(self.app_config)
+        self.analytic_module.post_init(self.app_config)
 
     @log
     def run_app_console(self):
@@ -41,7 +48,7 @@ class BootLoader:
         Run application in console interface
         :return: None
         """
-        self.init_app_entities()
+        self.__init_app_entities()
         try:
             self.local_logger.log(f'Console process run on pid {os.getpid()}')
             while True:
@@ -49,10 +56,11 @@ class BootLoader:
                 print('1. Kindle history module - to change your read file')
                 print('2. Transfer book - to transfer your books from pc to e-book')
                 print('3. Book database module - to manage your books saved on e-book')
-                print('4. Settings')
+                print('4. Book analytic module')
+                print('5. Settings')
 
-                print('5. Help')
-                print('6. Exit - to exit from utility')
+                print('6. Help')
+                print('7. Exit - to exit from utility')
                 module_to_use = int_input_from_user(values_range=6)
                 match module_to_use:
                     case 1:
@@ -62,11 +70,13 @@ class BootLoader:
                     case 3:
                         self.book_db_module.run_module()
                     case 4:
-                        self.settings_module.run_module()
+                        self.analytic_module.run_module()
                     case 5:
+                        self.settings_module.run_module()
+                    case 6:
                         self.help_distribution_manager()
                         continue
-                    case 6:
+                    case 7:
                         break
                     case _:
                         print('Wrong module number, try again')
@@ -81,7 +91,7 @@ class BootLoader:
         Run application in browser
         :return: None
         """
-        self.init_app_entities()
+        self.__init_app_entities()
         try:
             self.local_logger.log(f'Web process run on pid {os.getpid()}')
             webinterface = Web_interface(logger=self.local_logger)
