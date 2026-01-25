@@ -41,6 +41,7 @@ class BootLoader:
         self.settings_module.post_init(self.app_config)
         self.transfer_module.post_init(self.app_config)
         self.analytic_module.post_init(self.app_config)
+        self.local_logger.log('All entities are inited')
 
     @log
     def run_app_console(self):
@@ -50,7 +51,6 @@ class BootLoader:
         """
         self.__init_app_entities()
         try:
-            self.local_logger.log(f'Console process run on pid {os.getpid()}')
             while True:
                 print('Enter module number to use it:')
                 print('1. Kindle history module - to change your read file')
@@ -58,7 +58,6 @@ class BootLoader:
                 print('3. Book database module - to manage your books saved on e-book')
                 print('4. Book analytic module')
                 print('5. Settings')
-
                 print('6. Help')
                 print('7. Exit - to exit from utility')
                 module_to_use = int_input_from_user(values_range=6)
@@ -93,7 +92,6 @@ class BootLoader:
         """
         self.__init_app_entities()
         try:
-            self.local_logger.log(f'Web process run on pid {os.getpid()}')
             webinterface = Web_interface(logger=self.local_logger)
             webinterface.run_interface()
         except Exception as e:

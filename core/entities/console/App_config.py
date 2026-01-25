@@ -75,7 +75,7 @@ class App_config:
     def __init__(self, read_book_file_name: str = 'read.txt', config_file_name: str = 'config.txt',
                  is_auto: bool = True, is_logs: bool = False, exclude_dirs: list = None):
         # Main config parameters:
-        self.app_mode = None
+        self.app_mode = False  # True for console mode
         self.__central_dir = self.get_real_path()  # get current directory
         self.__current_dir = self.__central_dir
 

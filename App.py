@@ -18,8 +18,37 @@ __translator: Translator = None
 
 __app_config: App_config
 
-__console_process: Process = None
-__browser_process: Process = None
+
+class LW_process:
+    """
+    Process abstraction
+    """
+    __process_name: str
+    __pid: int
+    __process: Process
+
+    def __init__(self, name: str, target):
+        self.__process_name = name
+        self.__process = Process(target=target)
+        self.__pid = self.__process.pid
+
+    def get_pid(self):
+        return self.__pid
+
+    def get_process_name(self):
+        return self.__process_name
+
+    def still_alive(self):
+        return self.__process.is_alive()
+
+    def close_process(self):
+        global __global_logger
+        __global_logger.log(f'Process with name {self.__process_name} is finished')
+        self.__process.close()
+
+
+__console_process: LW_process = None
+__browser_process: LW_process = None
 
 
 def __init_app() -> None:
@@ -92,14 +121,16 @@ def __start_app():
 
 
 def __clean_app_entities():
+    """
+    Delete app entities in case of error or finish
+    :return: None
+    """
     global __global_logger, __translator, __console_process, __browser_process
     if __console_process is not None or __browser_process is not None:
         if __console_process.is_alive():
             __console_process.close()
-            __global_logger.log('Console process closed')
         if __browser_process.is_alive():
             __browser_process.close()
-            __global_logger.log('Browser process closed')
         __global_logger = None
         __translator = None
 

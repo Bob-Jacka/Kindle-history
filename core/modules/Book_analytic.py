@@ -55,7 +55,7 @@ class Book_analytic(Module):
                     month = current_date.month
                     day = current_date.day
                     years_passed = start_date - datetime.date(year, month, day)
-                    divide_string = f'{}/{years_passed}'
+                    # divide_string = f'{}/{years_passed}'
                 case _:
                     raise Exception('Wrong count method received ' + count_method)
             print('Average reading speed is ' + divide_string)

@@ -28,3 +28,4 @@ class Translator:
             )
         else:
             print('String to translate cannot be none')
+            return None
