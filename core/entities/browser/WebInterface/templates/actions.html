@@ -3,13 +3,20 @@
 {% block title %}Manager description{% endblock %}
 
 {% block content %}
-<p>Actions page - choose action with books</p>
+<p>Actions page - choose action with books:</p>
 
-<div>
-    <a class="navbar-brand" href="/add"></a>
-</div>
+<ul>
+    <li>
+        <div>
+            <a class="navbar-brand" href="/add">Add new book</a>
+        </div>
+    </li>
 
-<div>
-    <a class="navbar-brand" href="/remove"></a>
-</div>
+    <li>
+        <div>
+            <a class="navbar-brand" href="/remove">Remove existing book</a>
+        </div>
+    </li>
+</ul>
+
 {% endblock %}

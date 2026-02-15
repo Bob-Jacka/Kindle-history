@@ -12,7 +12,7 @@ from flask import (
 
 from data.Wrappers import safe_log
 
-__web_app: Flask = Flask(__name__)
+__web_app: Flask = Flask(__name__, static_url_path='/static')
 
 
 @safe_log

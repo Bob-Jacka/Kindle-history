@@ -21,7 +21,7 @@ __app_config: App_config
 
 class LW_process:
     """
-    Process abstraction
+    Process lightweight abstraction
     """
     __process_name: str
     __pid: int
@@ -42,9 +42,24 @@ class LW_process:
         return self.__process.is_alive()
 
     def close_process(self):
-        global __global_logger
-        __global_logger.log(f'Process with name {self.__process_name} is finished')
+        """
+        End process
+        :return: None
+        """
+        print(f'Process with name {self.__process_name} is finished')
         self.__process.close()
+
+    def start_proc(self):
+        print(f'{self.__process_name} started')
+        self.__process.start()
+
+    def swap_proc(self, process):
+        """
+        Replace process with another
+        :param process: process to replace with
+        :return: None
+        """
+        self.__process = process
 
 
 __console_process: LW_process = None
@@ -108,12 +123,13 @@ def __start_app():
     # Upper level error handling
     try:
         bootloader = BootLoader(logger=__global_logger, app_config=__app_config)
-        if mode:
-            __console_process = Process(target=bootloader.run_app_console)
-            __console_process.start()
-        else:
-            __browser_process = Process(target=bootloader.run_app_browser)
-            __browser_process.start()
+        if mode:  # if true - run in console mode
+            __console_process = LW_process('console', target=bootloader.run_app_console)
+            __console_process.start_proc()
+
+        else:  # if false - run browser version
+            __browser_process = LW_process('browser', target=bootloader.run_app_browser)
+            __browser_process.start_proc()
 
     except Exception as e:
         __global_logger.log(f'An exception occurred during app initialization - {e}')
@@ -127,10 +143,11 @@ def __clean_app_entities():
     """
     global __global_logger, __translator, __console_process, __browser_process
     if __console_process is not None or __browser_process is not None:
-        if __console_process.is_alive():
-            __console_process.close()
-        if __browser_process.is_alive():
-            __browser_process.close()
+        if __console_process.still_alive():
+            __console_process.close_process()
+
+        if __browser_process.still_alive():
+            __browser_process.close_process()
         __global_logger = None
         __translator = None
 
