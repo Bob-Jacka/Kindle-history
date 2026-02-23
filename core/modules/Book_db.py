@@ -39,6 +39,13 @@ class Book_db(Module):
         self.__start_point = app_config.get_central_dir_name()
         self.__local_logger = app_config.get_logger()
 
+    @log
+    def get_syntax_interpreter(self):
+        if self.__syntax_interpreter is not None:
+            return self.__syntax_interpreter
+        else:
+            return None
+
     @staticmethod
     def __get_table_view(file_descriptor) -> list[str]:
         """

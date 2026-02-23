@@ -31,6 +31,8 @@ class _Record:
     def get_book_id(self):
         if self.id != '':
             return self.id
+        else:
+            return None
 
     def get_book_name(self):
         return self.book_name

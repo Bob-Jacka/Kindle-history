@@ -69,6 +69,7 @@ class Strategy(abc.ABC):
             return self.local_logger
         else:
             self.local_logger.log("Local logger is None")
+            return None
 
     def set_local_logger(self, logger):
         """

@@ -14,9 +14,19 @@
 
 <form method="post">
     <label for="title">Title</label><br>
-    <input type="text" id="title" name="title"><br>
-    <label for="content">Content</label><br>
-    <textarea id="content" name="content"></textarea><br>
+    <input type="text" required id="title" name="title"><br>
+
+    <h5>Optional param</h5>
+    <label for="author">Book author</label><br>
+    <input type="text" id="author" name="Author"><br>
+
+    <h5>Optional param</h5>
+    <label for="category">Book category (programming, etc.)</label><br>
+    <input type="text" id="category" name="Category"><br>
+
+    <label for="book_type">Book type (text/audio)</label><br>
+    <input type="text" required id="book_type" name="Book type"><br>
+
     <input type="submit" value="Submit">
 </form>
 

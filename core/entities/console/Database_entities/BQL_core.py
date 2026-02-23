@@ -3,11 +3,14 @@ BQL (Book query language) is used in book database module.
 Dummy syntax interpreter for BQ language in this file
 """
 
-from typing import Final
+from typing import Final, Literal
 
 from core.entities.console.Database_entities.Database import Database
 from core.exceptions.DatabaseException import SyntaxInterpreterException
-from data.Wrappers import log, cancelable_operation
+from data.Wrappers import (
+    log,
+    cancelable_operation
+)
 
 
 class Syntax_interpreter:
@@ -88,6 +91,11 @@ class Syntax_interpreter:
 
     @cancelable_operation
     def _create_database(self, db_name: str) -> None:
+        """
+        Create database
+        :param db_name: database name
+        :return: None
+        """
         try:
             new_database = Database(db_name)
             self.databases.append(new_database)
@@ -181,8 +189,54 @@ class Syntax_interpreter:
         pass
 
     @log
+    def test_interpreter(self):
+        return "Hello from interpreter"
+
+    @log
     def print_help(self):
         print('This module is responsible for database functionality')
         print('Here are words that used')
         for _, value in self.__syntax_rules:
             print(f'{value[0]} word contains next comment: {value[1]}')
+
+    class Static_expressions:
+        """
+        Static BQL expressions to use;
+        Can be used in web interface (auto mode) or console without interactive interpreter;
+        """
+
+        @log
+        @staticmethod
+        def update_record() -> str:
+            return f''
+
+        @log
+        @staticmethod
+        def add_record_exp1(rec_name: str, table_name: str) -> str:
+            """
+            Add record with lite parameters, only name
+            :param rec_name: Record name (name of the book)
+            :param table_name: Table to insert
+            :return:
+            """
+            return f'add Record(name={rec_name} in Table(name={table_name})'
+
+        @log
+        @staticmethod
+        def add_record_exp2(rec_name: str, book_author: str,
+                            book_type: Literal['text', 'audio'],
+                            table_name: str) -> str:
+            """
+            Full version of record add, with all parameters
+            :param book_author: author of the book
+            :param book_type: type literal, only text or audio
+            :param rec_name: Record name (name of the book)
+            :param table_name: Table to insert
+            :return:
+            """
+            return f'add Record(name={rec_name} in Table(name={table_name})'
+
+        @log
+        @staticmethod
+        def remove_record() -> str:
+            return f''
