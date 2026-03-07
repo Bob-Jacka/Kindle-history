@@ -9,7 +9,7 @@ from core.modules.Book_analytic import Book_analytic
 from core.modules.Book_db import Book_db
 from core.modules.Kindle_history import Kindle_history
 from core.modules.Settings import Setting
-from core.modules.Transfer_book import Transfer_book
+from core.modules.Calibre_сonnector import Calibre_сonnector
 from core.other.Utils import (
     int_input_from_user
 )
@@ -27,7 +27,7 @@ class BootLoader:
 
         self.history_module: Kindle_history = Kindle_history(cli_parameters=list())
         self.book_db_module: Book_db = Book_db()
-        self.transfer_module: Transfer_book = Transfer_book()
+        self.transfer_module: Transfer_book = Calibre_сonnector()
         self.settings_module: Setting = Setting()
         self.analytic_module: Book_analytic = Book_analytic()
 
