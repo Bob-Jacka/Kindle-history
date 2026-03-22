@@ -36,7 +36,7 @@ class BootLoader:
     def run_app_browser(self):
         """
         Run application in browser
-        :return: None
+        :return: None`
         """
         self.__init_app_entities()
         try:

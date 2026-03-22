@@ -2,20 +2,18 @@ import os
 import sys
 from multiprocessing import Process
 
+from core.entities.App_config import App_config
 from core.entities.BootLoader import BootLoader
 from core.entities.BotLogger import BotLogger
-from core.entities.Formatter import Format
-# from core.entities.Translator import Translator
-from core.entities.App_config import App_config
+from core.entities.Translator import Translator
 from data.Constants import (
     APP_NAME,
-    INPUT_SYM,
     STATIC_READ_FILE_NAME,
     STATIC_CONFIG_NAME
 )
 
 __global_logger: BotLogger = None
-# __translator: Translator = None
+__translator: Translator = None
 
 __app_config: App_config
 
@@ -106,7 +104,7 @@ def __init_app_entities():
     global __global_logger
     try:
         __global_logger = BotLogger()
-        # __translator = Translator()
+        __translator = Translator()
     except Exception as e:
         print(f'Error in initializing app entities - {e}')
         raise Exception(f'App initialization failed due to {e}')

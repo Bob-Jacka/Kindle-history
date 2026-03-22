@@ -35,33 +35,45 @@ class Book_data:
         :param book_category: category of the book
         :param book_type: literal type
         """
-        self.current_dir = current_storing_dir
-        self.book_name = book_name
-        self.book_type = book_type
-        self.book_category = book_category
-        self.book_author = book_author
+        self.__current_dir = current_storing_dir
+        self.__book_name = book_name
+        self.__book_type = book_type
+        self.__book_category = book_category
+        self.__book_author = book_author
 
     def get_current_dir(self) -> str:
-        return self.current_dir
+        return self.__current_dir
 
-    def get_book_type(self):
-        return self.book_type
+    def get_book_type(self) -> str:
+        return self.__book_type
 
-    def get_book_category(self):
-        return self.book_category
+    def get_book_category(self) -> str:
+        return self.__book_category
 
     def get_book_name(self) -> str:
-        return self.book_name
+        return self.__book_name
 
     def get_book_author(self) -> str:
-        return self.book_author
+        return self.__book_author
+
+    def set_book_type(self, new_type) -> None:
+        self.__book_type = new_type
+
+    def set_book_category(self, new_category) -> None:
+        self.__book_category = new_category
+
+    def set_book_name(self, new_book_name) -> None:
+        self.__book_name = new_book_name
+
+    def set_book_author(self, new_author_name) -> None:
+        self.__book_author = new_author_name
 
     def get_book_extension(self, book_extensions: list) -> str | None:
         """
         Receives book extension by cutting book name
         :return: string value for book extension or None if book not found
         """
-        copy_book_name = copy(self.book_name)
+        copy_book_name = copy(self.__book_name)
         book_ext = copy_book_name[-1:copy_book_name.find('.')]
         if book_ext in book_extensions:
             return book_ext
@@ -74,7 +86,7 @@ class Book_data:
         Method for returning full path by concatenating current dir and book name.
         :return: string value
         """
-        return self.current_dir + self.book_name
+        return self.__current_dir + self.__book_name
 
     def get_save_point_path(self) -> str:
         """
@@ -82,7 +94,7 @@ class Book_data:
         Do not exception safe, need to check path before use.
         :return: string value
         """
-        return self.current_dir + self.book_name[:self.book_name.find('.')] + _SAVE_POINT_EXTENSION
+        return self.__current_dir + self.__book_name[:self.__book_name.find('.')] + _SAVE_POINT_EXTENSION
 
     def get_save_point_name(self) -> str:
         """
@@ -90,14 +102,14 @@ class Book_data:
         Do not exception safe, need to check path before use.
         :return: name of bookmark dir
         """
-        return self.book_name[:self.book_name.find('.')] + _SAVE_POINT_EXTENSION
+        return self.__book_name[:self.__book_name.find('.')] + _SAVE_POINT_EXTENSION
 
     def has_bookmark_dir(self) -> bool:
         """
         Method for checking if bookmark dir exists
         :return: bool value of existence.
         """
-        return Path(self.book_name[:self.book_name.find('.')] + _SAVE_POINT_EXTENSION).exists()
+        return Path(self.__book_name[:self.__book_name.find('.')] + _SAVE_POINT_EXTENSION).exists()
 
     def get_lua_data(self) -> tuple[bool, None, None] | tuple[bool, float, str] | None:
         """
@@ -172,8 +184,26 @@ class Book_data:
         :return: Book name
         """
         short_book_name: str
-        if len(self.book_name) > 80:
-            short_book_name = copy(self.book_name)[0:80] + '...'
+        if len(self.__book_name) > 80:
+            short_book_name = copy(self.__book_name)[0:80] + '...'
         else:
-            short_book_name = copy(self.book_name)
+            short_book_name = copy(self.__book_name)
         return short_book_name
+
+    def __str__(self) -> str:
+        """
+        String representation of Book_data object.
+        :return: formatted string with book info
+        """
+        return (f"Book_data(name='{self.__book_name}', "
+                f"author='{self.__book_author}', "
+                f"type={self.__book_type}, "
+                f"category='{self.__book_category}', "
+                f"dir='{self.__current_dir}')")
+
+    def __repr__(self) -> str:
+        return (f"Book_data(current_storing_dir='{self.__current_dir}', "
+                f"book_name='{self.__book_name}', "
+                f"book_category='{self.__book_category}', "
+                f"book_type={self.__book_type!r}, "
+                f"book_author='{self.__book_author}')")

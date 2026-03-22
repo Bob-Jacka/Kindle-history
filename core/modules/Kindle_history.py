@@ -9,6 +9,7 @@ Module gives you an interactive way of using your e-book
 import os
 
 from data.Wrappers import log
+import datetime
 
 try:
     from core.entities.Book_data import Book_data
@@ -38,6 +39,11 @@ except Exception as e:
     print(f'An exception occurred during dependencies import - {e}')
 
 
+class book_type(Enum):
+    Text = 'Text'
+    Audio = 'Audio'
+
+
 class Kindle_history(Module):
 
     def __init__(self, cli_parameters: list[str]):
@@ -64,14 +70,19 @@ class Kindle_history(Module):
         """
         split_line = line.split('|')
         to_return: dict[str, str] = dict()
-        if len(split_line) < 3 and len(split_line) == 1:  # case of no such format
+        if len(split_line) < 4 and len(split_line) == 1:  # case of no such format
             to_return['name'] = str(split_line)
+            to_return['author'] = '-'
+            to_return['date'] = '-'
+            to_return['type'] = '-'
             self.local_logger.log('Wrong format string in parsing found')
             return to_return
-        to_return['name'] = split_line[0]
-        to_return['author'] = split_line[1]
-        to_return['date'] = split_line[2]
-        return to_return
+        else:
+            to_return['name'] = split_line[0]
+            to_return['author'] = split_line[1]
+            to_return['date'] = split_line[2]
+            to_return['type'] = split_line[3]
+            return to_return
 
     @log
     def list_all_read_book(self) -> list[dict]:
@@ -97,42 +108,40 @@ class Kindle_history(Module):
         if len(stored_fav_books) == 0:
             return []
         else:
-            stored_fav_books.remove('.')
             for stored_book in stored_fav_books:
-                pass
+                fav_books.append(self.__parse_line(stored_book))
             if len(fav_books) != 0:
                 return fav_books
             else:
                 return []
 
     @log
-    def add_new_book_to_history(self, book_data: Book_data):
+    def add_new_book_to_history(self, book: Book_data):
         """
-        :param book_data: tuple with book info, where first argument is path to book and second argument is book name
+        :param book: where first argument is path to book and second argument is book name
         :return: None
         """
-        if book_data is not None:
+        if book is not None:
             try:
-                book_name: str  # name of the book to proceed
-                pass
+                with open(self.config.path_to_read_file(), 'a+') as file_to_write:
+                    file_to_write.write(str(book.get_book_name()) + ' | ')
+                    file_to_write.write(str(book.get_book_author()) + ' | ')
+                    file_to_write.write(str(datetime.datetime.now().year) + ' | ')
+                    file_to_write.write(str(book.get_book_type()))
+                    file_to_write.write('\n')
             except Exception as e:
                 self.local_logger.log(f'Exception while adding new book - {e}')
 
     @log
-    def count_books(self):
+    def count_all_books(self) -> tuple[list[dict], list[dict], int]:
         """
         Function for count books in read file if exists
-        :return: book count in terminal
+        :return: book count
         """
-        if self.book_county != 0:
-            book_counter = 0
-            for line in self.readfile:
-                if line != '\n':
-                    book_counter += 1
-                self.book_county = book_counter
-                print(f'Books count is - {Format.underline_start + str(book_counter) + Format.underline_end}')
-        else:
-            print(f'Books count is - {Format.underline_start + str(self.book_county) + Format.underline_end}')
+        all_books: list[dict] = self.list_all_read_book()
+        fav_books: list[dict] = self.list_favourite_books()
+        count = len(all_books) + len(fav_books)
+        return tuple((all_books, fav_books, count))
 
     @log
     def find_book(self, book_to_find) -> None:
@@ -157,7 +166,7 @@ class Kindle_history(Module):
         Check for duplicates in read file and output useful message about
         :return: None
         """
-        all_data = self.readfile.readlines()
+        all_data = self.readFile.readlines()
         is_found: bool = False
         for book_name in all_data:
             count = all_data.count(book_name)

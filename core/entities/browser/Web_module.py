@@ -24,6 +24,7 @@ class Web_interface:
             Flask_interface.Dp.history_mod = self.history_book
             Flask_interface.Dp.stat_mod = self.stat
             Flask_interface.Dp.transfer_mod = self.transfer
+            Flask_interface.Dp.local_logger = self.logger
             Flask_interface.run_web_app()
             self.logger.log('Server ending work')
         except Exception as e:

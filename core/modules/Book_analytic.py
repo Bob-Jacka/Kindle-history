@@ -2,7 +2,6 @@ import datetime
 from typing import Literal
 
 from core.entities.AbstractModule import Module
-from core.other.Utils import int_input_from_user
 from data.Wrappers import log
 
 
@@ -19,24 +18,6 @@ class Book_analytic(Module):
 
     def run_module_web(self) -> None:
         pass
-
-    @log
-    def run_module_console(self) -> None:
-        while True:
-            print('Book analytic module:')
-            print('1. Get average speed of reading')
-            print('2. Exit from module')
-            user_choice = int_input_from_user()
-            match user_choice:
-                case 1:
-                    self.get_average_reading_speed()
-                    break
-                case 2:
-                    break
-                case 1:
-                    pass
-                case _:
-                    pass
 
     @log
     def get_average_reading_speed(self, start_date, count_method: Literal['days', 'months', 'year']):
