@@ -41,4 +41,6 @@ STATIC_CONFIG_NAME: Final[str] = 'config.txt'
 
 STATIC_READ_FILE_NAME: Final[str] = 'read.txt'
 
-APP_VERSION: Final[str] = '4.1.0'
+STATIC_DIR_NAME_FOR_FAV: Final[str] = 'прочитанные'
+
+APP_VERSION: Final[str] = '5.1.0'

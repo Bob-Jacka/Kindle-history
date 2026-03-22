@@ -1,3 +1,7 @@
+import abc
+
+from core.entities.AbstractModule import Module
+
 import datetime
 import os
 import platform
@@ -7,11 +11,12 @@ from enum import Enum
 from pathlib import Path
 
 from core.entities.Formatter import Format
-from core.entities.console.Kindle_history_entities.Book_data import Book_data
+from core.entities.Book_data import Book_data
 from data.Constants import (
     NON_BOOK_EXTENSIONS,
     INPUT_SYM
 )
+from data.Wrappers import log
 
 
 class OSType(Enum):
@@ -250,3 +255,68 @@ class Book_dir_controller:
         for dir in self.dirs:
             for _ in dir.get_book_names():
                 counter += 1
+
+
+class Connect_device(abc.ABC):
+    """
+    Abstract class for support of connected devices.
+    Implement Class for your device to use.
+    """
+
+    @abc.abstractmethod
+    def connect(self):
+        pass
+
+    @abc.abstractmethod
+    def get_path(self):
+        pass
+
+    @abc.abstractmethod
+    def generate_tmp_dir(self):
+        pass
+
+    @abc.abstractmethod
+    def close_connection(self):
+        pass
+
+
+class Transfer(Module):
+
+    def run_module_web(self) -> None:
+        pass
+
+    def __init__(self):
+        self.config = None
+        self.local_logger = None
+        self.book_dir_controller = None
+
+    @log
+    def post_init(self, app_config):
+        self.config = app_config
+        self.local_logger = app_config.get_logger()
+        self.book_dir_controller = Book_dir_controller(app_config)
+
+    @log
+    def add_new_book(self, book: Book_data) -> None:
+        """
+        Add new book for auto processing.
+        :param book: book object to add
+        :return: None
+        """
+        if book is not None:
+            try:
+                book_name: str  # name of the book to proceed
+                if self.readFile is not None:
+                    self.readFile.add_book(book)
+                    self.book_dir_controller.copy_fs_entity(book.get_full_path())
+                    self.book_dir_controller.copy_fs_entity(book.get_save_point_path(),
+                                                            dir_name=book.get_save_point_name())
+                    self.local_logger.log('Save points also saved')
+                    self.book_dir_controller.delete_fs_entity(
+                        book.get_full_path()
+                    )  # delete book if you not want to save it
+                else:
+                    self.book_dir_controller.delete_fs_entity(book.get_full_path())
+
+            except Exception as e:
+                self.local_logger.log(f'Exception while adding new book - {e}')

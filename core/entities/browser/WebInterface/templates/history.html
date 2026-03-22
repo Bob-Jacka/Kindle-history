@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block title %}История книг{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>История прочитанных книг</h1>
+
+    <div class="btn-group mb-4">
+        <a href="/history?view=all"
+           class="btn {% if view == 'all' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+            Все книги
+        </a>
+        <a href="/history?view=favourites"
+           class="btn {% if view == 'favourites' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+            Любимые
+        </a>
+    </div>
+
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Название</th>
+            <th>Автор</th>
+            <th>Дата</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for book in books %}
+        <tr>
+            <td>{{ book.name  or '-' }}</td>
+            <td>{{ book.author or '-' }}</td>
+            <td>{{ book.date or '-' }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+
+{% block title %}Статистика чтения{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <h1>Статистика чтения</h1>
+
+    <!-- Карточки с основной статистикой -->
+    <div class="row mt-4">
+        <div class="col-md-4 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fa fa-book"></i> Всего книг</h5>
+                    <h2 class="display-4">{{ total_books }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fa fa-clock-o"></i> Средняя скорость</h5>
+                    <h2 class="display-4">{{ avg_speed }}</h2>
+                    <p class="text-muted">книг/год</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fa fa-headphones"></i> Аудиокниг</h5>
+                    <h2 class="display-4">{{ audio_books }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Статистика по категориям -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fa fa-tags"></i> По категориям</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group">
+                        {% for category, count in categories.items() %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{ category }}
+                            <span class="badge bg-primary rounded-pill">{{ count }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Последние добавленные -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fa fa-history"></i> Последние добавленные</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group">
+                        {% for book in recent_books %}
+                        <li class="list-group-item">
+                            <strong>{{ book.title }}</strong>
+                            {% if book.author %}
+                            <br><small class="text-muted">{{ book.author }}</small>
+                            {% endif %}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Форма для расчёта скорости -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fa fa-calculator"></i> Рассчитать скорость чтения</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="/stats/calculate">
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="start_date" class="form-label">Начальная дата</label>
+                                <input type="date" class="form-control" id="start_date" name="start_date" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="period" class="form-label">Период</label>
+                                <select class="form-select" id="period" name="period">
+                                    <option value="days">По дням</option>
+                                    <option value="months">По месяцам</option>
+                                    <option value="year" selected>По годам</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3 d-flex align-items-end">
+                                <button type="submit" class="btn btn-primary w-100">Рассчитать</button>
+                            </div>
+                        </div>
+                    </form>
+                    {% if calculated_speed %}
+                    <div class="alert alert-info mt-3">
+                        <strong>Результат:</strong> {{ calculated_speed }} книг в {{ period_name }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

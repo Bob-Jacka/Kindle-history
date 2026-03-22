@@ -67,6 +67,7 @@ class Book_data:
             return book_ext
         else:
             Format.prRed('Book extension does not support')
+            return None
 
     def get_full_path(self) -> str:
         """

@@ -1,7 +1,7 @@
 import datetime
 from typing import Literal
 
-from core.entities.console.AbstractModule import Module
+from core.entities.AbstractModule import Module
 from core.other.Utils import int_input_from_user
 from data.Wrappers import log
 
@@ -17,8 +17,11 @@ class Book_analytic(Module):
     def post_init(self, app_config):
         self.config = app_config
 
+    def run_module_web(self) -> None:
+        pass
+
     @log
-    def run_module(self) -> None:
+    def run_module_console(self) -> None:
         while True:
             print('Book analytic module:')
             print('1. Get average speed of reading')
@@ -61,3 +64,7 @@ class Book_analytic(Module):
             print('Average reading speed is ' + divide_string)
         else:
             raise Exception('Start date cannot be None')
+
+    @log
+    def get_max_time_reading(self):
+        pass

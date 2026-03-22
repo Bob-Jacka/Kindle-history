@@ -7,7 +7,7 @@ from abc import (
 class Module(abc.ABC):
 
     @abstractmethod
-    def post_init(self, app_config):
+    def post_init(self, app_config) -> None:
         """
         Post construct method for initializing config file in module
         :return: None
@@ -15,9 +15,5 @@ class Module(abc.ABC):
         pass
 
     @abstractmethod
-    def run_module(self) -> None:
-        """
-        Entry point to module to execute.
-        :return: None
-        """
+    def run_module_web(self) -> None:
         pass

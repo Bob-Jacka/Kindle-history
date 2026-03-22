@@ -5,29 +5,52 @@
 {% block content %}
 <div class="container my-5">
     <h1 class="text-center mb-4">BookManager description</h1>
+    <p class="text-center text-muted mb-5">
+        Non-useful app if you have cracked (with "Koreader") Kindle or other e-book and want to save your books.
+    </p>
+
     <div class="row">
-        <div class="col-md-6">
-            <h2>Database</h2>
-            <p class="mb-0">
-                Utility supports custom database with BQ language to query books.
-            </p>
+        <div class="col-md-6 mb-4">
+            <h2>Book database (Book_db)</h2>
+            <p>Inner nosql database for interaction in interactive or non-interactive mode.</p>
+            <p class="mb-1"><strong>Methods:</strong></p>
+            <ul>
+                <li>CRUD operations (create, read, update, delete)</li>
+                <li>Inner syntax interpreter for interactive mode</li>
+            </ul>
+            <p class="mb-1"><strong>Modes:</strong></p>
+            <ul>
+                <li>Interactive - manual BQL command input</li>
+                <li>Non-interactive - auto mode, select commands</li>
+            </ul>
         </div>
-        <div class="col-md-6">
-            <h2>Work mode</h2>
-            <p class="mb-0">Utility supports two work mode:</p>
-            <p class="text-muted">- Manual mode</p>
-            <p class="text-muted">- Auto mode</p>
+
+        <div class="col-md-6 mb-4">
+            <h2>Kindle history</h2>
+            <p>Module used for interaction with read file.</p>
+            <p class="mb-1"><strong>Methods:</strong></p>
+            <ul>
+                <li>Convenient way to save books that you want</li>
+                <li>Delete books that you want</li>
+                <li>Write history about your already read books</li>
+            </ul>
+            <p class="mb-1"><strong>Modes:</strong></p>
+            <ul>
+                <li>Auto mode - automatically save books in file</li>
+                <li>Manual mode - ask user about anything</li>
+            </ul>
         </div>
     </div>
-    <div class="row mt-5">
-        <div class="col-md-6">
-            <h2>Навыки</h2>
-            <ul class="list-group">
-                <li class="list-group-item border-0 py-1"><i class="fa fa-cog"></i> Python</li>
-                <li class="list-group-item border-0 py-1"><i class="fa fa-cog"></i> Django</li>
-                <li class="list-group-item border-0 py-1"><i class="fa fa-cog"></i> HTML/CSS</li>
-                <li class="list-group-item border-0 py-1"><i class="fa fa-cog"></i> JavaScript</li>
-            </ul>
+
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <h2>Transfer book</h2>
+            <p>Module for transferring books from your local personal computer to e-book by Custom device interface.</p>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <h2>Book analytic</h2>
+            <p>Module for analytic.</p>
         </div>
     </div>
 </div>

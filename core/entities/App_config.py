@@ -18,7 +18,6 @@ class Config_param_names(Enum):
     ENABLE_LOGS = 'is_enable_logs'
     EXCLUDE_DIRS = 'exclude_directories'
     CENTRAL_DIR = 'central_dir'
-    APP_MODE = 'app_mode'
 
 
 @dataclass
@@ -29,6 +28,11 @@ class App_config:
     Also store and manage paths in utility.
     """
 
+    __run_os: str
+    """
+    Which os (operating system) is using to run utility
+    """
+
     __read_book_file: str
     """
     Default name of the file with read book.
@@ -37,11 +41,6 @@ class App_config:
     __config_name: str
     """
     Default name of the config file
-    """
-
-    __is_auto_mode: bool
-    """
-    Is auto resolve books and auto mode in Kindle history module.
     """
 
     __is_enable_logs: bool
@@ -65,18 +64,19 @@ class App_config:
     pointer to current working directory of the application
     """
 
+    __is_multithread: bool
+
     __global_logger: Final[BotLogger] = BotLogger()
     """
     Global instance of logger class.
-    Change logger parameter to turn on logs in console.
     Logger creates in different branches of app execution.
     """
 
-    def __init__(self, read_book_file_name: str = 'read.txt', config_file_name: str = 'config.txt',
-                 is_auto: bool = True, is_logs: bool = False, exclude_dirs: list = None):
+    def __init__(self, run_os: str, read_book_file_name: str = 'read.txt', config_file_name: str = 'config.txt',
+                 is_auto: bool = True, is_logs: bool = False, is_multithread: bool = False, exclude_dirs: list = None):
         # Main config parameters:
-        self.app_mode = False  # True for console mode
-        self.__central_dir = self.get_real_path()  # get current directory
+        self.__run_os = run_os
+        self.__central_dir = self.path_to_dir_with_app()  # get current directory
         self.__current_dir = self.__central_dir
 
         # Other config parameters:
@@ -84,6 +84,7 @@ class App_config:
         self.__config_name = config_file_name
         self.__is_auto_mode = is_auto  # also used for interactive or not mode
         self.__is_enable_logs = is_logs  # turn off if you want to disable logs
+        self.__is_multithread = is_multithread
         self.__exclude_directories = exclude_dirs
 
     def get_help_config(self) -> None:
@@ -115,31 +116,32 @@ class App_config:
     def path_to_read_file(self) -> str:
         return self.__central_dir + self.__read_book_file
 
-    def init_config(self, config_file_name: str) -> None:
+    def init_config(self, config_file_path: str) -> None:
         """
         Initialize app by given config.
         Parse config file and get line by line parameters
-        :param config_file_name: name of the config file to init.
+        :param config_file_path: name of the config file to init.
         :return: None
         """
-        with open(config_file_name) as file:
+        with open(config_file_path) as file:
             for line in file:
                 if ':' in line:
                     split_line = line.split(':')
                     value = split_line[1].strip()  # value for setting into configuration parameter
-                    if value != '':
-                        if line.startswith(Config_param_names.READ_BOOK_FILE_NAME.value):
+                    name = split_line[0].strip()
+                    if value != '' and name != '':
+                        if name == Config_param_names.READ_BOOK_FILE_NAME.value:
                             self.__read_book_file = value
-                        elif line.startswith(Config_param_names.ENABLE_LOGS.value):
+                        elif name == Config_param_names.ENABLE_LOGS.value:
                             self.__is_enable_logs = bool(value)
-                        elif line.startswith(Config_param_names.AUTO_MODE.value):
+                        elif name == Config_param_names.AUTO_MODE.value:
                             self.__is_auto_mode = bool(value)
-                        elif line.startswith(Config_param_names.EXCLUDE_DIRS.value):
-                            self.__exclude_directories = list(value)
-                        elif line.startswith(Config_param_names.CENTRAL_DIR.value):
-                            self.__central_dir = value
-                        elif line.startswith(Config_param_names.APP_MODE.value):
-                            self.app_mode = value
+                        elif name == Config_param_names.EXCLUDE_DIRS.value:
+                            if value == 'None':
+                                self.__exclude_directories = list()
+                        elif name == Config_param_names.CENTRAL_DIR.value:
+                            if value == 'None':
+                                self.__central_dir = ""
                         else:
                             raise Exception(f'Wrong config parameter - {line}')
                     else:
@@ -153,7 +155,7 @@ class App_config:
         if self.__read_book_file is not None:
             return self.__read_book_file
         else:
-            raise Exception('Try to get null value')
+            raise Exception('Try to get null value, failed')
 
     def get_config_file_name(self):
         if self.__config_name is not None:
@@ -195,6 +197,12 @@ class App_config:
         else:
             raise Exception('File with read books is not initialized')
 
+    def is_multithreaded_app_mode(self):
+        if self.__is_multithread is not None:
+            return self.__is_multithread
+        else:
+            raise Exception('Multithread mode is None')
+
     def get_logger(self):
         return self.__global_logger
 
@@ -211,7 +219,7 @@ class App_config:
         :return: None
         """
         p = Path(
-            '../../..')  # check current directory
+            '../..')  # check current directory
         dir_list = [x for x in p.iterdir() if x.is_dir()]
         Format.prGreen('Available directories:')
         if len(dir_list) == 0:
@@ -236,13 +244,13 @@ class App_config:
                     break
 
     @staticmethod
-    def create_tmp_config():
+    def create_tmp_config(path: str | Path):
         """
         Creates config if you cannot do it by yourself.
         :return: None
         """
         try:
-            with open('config.txt', 'w+') as tmp_config:
+            with open(path + '/config.txt', 'w+') as tmp_config:
                 tmp_config.write(f'{Config_param_names.READ_BOOK_FILE_NAME.value}: read.txt')
                 tmp_config.write('\n')
                 tmp_config.write(f'{Config_param_names.AUTO_MODE.value}: false')
@@ -259,14 +267,67 @@ class App_config:
             print(f'Exception in create config file - {e}, file not created')
 
     @staticmethod
-    def get_real_path(end_with: str = '') -> str:
+    def path_to_dir_with_app(end_with: str = '') -> str:
         """
         Get real path to file with back system separator if you not provide end_with value.
-        By default, return path to central directory (utility home)
+        By default, return path to central directory (utility home);
+        Example - if your app is stored in /home/user/books, than app archive will be pointing to /home/user/books
         :param end_with: value that will be inserted at back of the path
         :return: string value, representing path in your system
         """
         return Path(os.getcwd()).parent.absolute().as_posix() + os.sep + end_with
 
-    def get_app_mode(self):
-        return self.app_mode
+
+class App_config_builder:
+    """
+    Builder class for App_config.
+    Provides step-by-step configuration of App_config instance.
+    """
+
+    def __init__(self):
+        self._run_os: str = ""
+        self._read_book_file_name: str = 'read.txt'
+        self._config_file_name: str = 'config.txt'
+        self._is_auto: bool = True
+        self._is_logs: bool = False
+        self._is_multithread: bool = False
+        self._exclude_dirs: list = None
+
+    def set_run_os(self, os_name: str) -> 'App_config_builder':
+        self._run_os = os_name
+        return self
+
+    def set_read_book_file_name(self, name: str) -> 'App_config_builder':
+        self._read_book_file_name = name
+        return self
+
+    def set_config_file_name(self, name: str) -> 'App_config_builder':
+        self._config_file_name = name
+        return self
+
+    def set_auto_mode(self, is_auto: bool) -> 'App_config_builder':
+        self._is_auto = is_auto
+        return self
+
+    def set_logs(self, is_logs: bool) -> 'App_config_builder':
+        self._is_logs = is_logs
+        return self
+
+    def set_multithread(self, is_multithread: bool) -> 'App_config_builder':
+        self._is_multithread = is_multithread
+        return self
+
+    def set_exclude_dirs(self, dirs: list) -> 'App_config_builder':
+        self._exclude_dirs = dirs
+        return self
+
+    def build(self) -> 'App_config':
+        return App_config(
+            run_os=self._run_os,
+            read_book_file_name=self._read_book_file_name,
+            config_file_name=self._config_file_name,
+            is_auto=self._is_auto,
+            is_logs=self._is_logs,
+            is_multithread=self._is_multithread,
+            exclude_dirs=self._exclude_dirs
+        )
