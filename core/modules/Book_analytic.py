@@ -13,9 +13,11 @@ class Book_analytic(Module):
         """
         self.config = None
 
+    @log
     def post_init(self, app_config):
         self.config = app_config
 
+    @log
     def run_module_web(self) -> None:
         pass
 
@@ -41,7 +43,7 @@ class Book_analytic(Module):
                     years_passed = start_date - datetime.date(year, month, day)
                     # divide_string = f'{}/{years_passed}'
                 case _:
-                    raise Exception('Wrong count method received ' + count_method)
+                    raise Exception('Wrong count method received: ' + count_method)
             print('Average reading speed is ' + divide_string)
         else:
             raise Exception('Start date cannot be None')

@@ -6,7 +6,7 @@ from typing import Final
 
 from core.entities.BotLogger import BotLogger
 from core.entities.Formatter import Format
-from data.Constants import INPUT_SYM
+from data.Constants import INPUT_SYM, STATIC_DIR_NAME_FOR_FAV
 
 
 class Config_param_names(Enum):
@@ -20,8 +20,18 @@ class Config_param_names(Enum):
     CENTRAL_DIR = 'central_dir'
 
 
+class SingletonMeta(type):
+    _instances = {}
+
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            instance = super().__call__(*args, **kwargs)
+            cls._instances[cls] = instance
+        return cls._instances[cls]
+
+
 @dataclass
-class App_config:
+class App_config(metaclass=SingletonMeta):
     """
     Class for configuration application with parameters.
     Simple store variables app configuration.
@@ -189,7 +199,7 @@ class App_config:
         if self.__central_dir is not None:
             return self.__central_dir
         else:
-            raise Exception('File with read books is not initialized')
+            raise Exception('Central directory path is None')
 
     def get_current_dir_name(self):
         if self.__current_dir is not None:
@@ -205,43 +215,6 @@ class App_config:
 
     def get_logger(self):
         return self.__global_logger
-
-    def move_upper(self):
-        """
-        Move upper in file system tree
-        :return: None
-        """
-        __current_dir = Path(self.__current_dir).parent
-
-    def move_lower(self):
-        """
-        Move lower in file system tree
-        :return: None
-        """
-        p = Path(
-            '../..')  # check current directory
-        dir_list = [x for x in p.iterdir() if x.is_dir()]
-        Format.prGreen('Available directories:')
-        if len(dir_list) == 0:
-            Format.prRed('There are no directories nearby')
-        else:
-            dir_counter = 0  # change value to zero if you are a programmer.
-            for dir in dir_list:
-                print(f'{dir_counter}: {dir.name}')
-                dir_counter += 1
-
-            print()  # just empty line
-            print(f'Or {777}: to exit this menu')
-
-            while True:
-                print('Enter dir number to move in')
-                dir_number = int(input(777))
-                if dir_number in range(len(dir_list)):
-                    __current_dir = dir_list[dir_number].as_posix()
-                    break
-                elif dir_number == int(777):
-                    self.__global_logger.log('Close menu')
-                    break
 
     @staticmethod
     def create_tmp_config(path: str | Path):
@@ -276,6 +249,9 @@ class App_config:
         :return: string value, representing path in your system
         """
         return Path(os.getcwd()).parent.absolute().as_posix() + os.sep + end_with
+
+    def path_to_stored_books(self):
+        return self.path_to_dir_with_app() + STATIC_DIR_NAME_FOR_FAV
 
 
 class App_config_builder:

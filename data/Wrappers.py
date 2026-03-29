@@ -45,13 +45,15 @@ def write_log(function) -> Callable:
 
 def log(function) -> Callable:
     """
-    Record database function invocation with time and date.
+    Log function invocation
     :param function: function object to invoke
     :return: Decorator function
     """
 
     def wrapper(*args, **kwargs) -> Any:
-        log_msg: str = f'[{datetime.datetime.now()}]: invoked function with name: "{function.__name__}"'
+        maybe_class = function.__qualname__.split('.')[0]
+        log_msg: str = f'[{datetime.datetime.now()}]: invoked function with name: "{function.__name__}"' + (
+                " in class " + maybe_class) if len(maybe_class) > 0 else ''
         print('\033[97m' + log_msg + '\033[00m')
         r = function(*args, **kwargs)
         return r

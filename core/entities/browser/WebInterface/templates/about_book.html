@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+
+{% block title %}О книге{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Информация о книге</h1>
+
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <div class="alert alert-warning">
+        {% for message in messages %}
+        <p>{{ message }}</p>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <div class="mb-4">
+        <label for="book_select" class="form-label">Выберите книгу:</label>
+        <select class="form-select" id="book_select">
+            <option value="">-- Выберите книгу --</option>
+            {% for book in books %}
+            <option value="{{ book.name }}">{{ book.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <!-- Карточка с информацией о книге -->
+    <div id="book_info" class="card" style="display: none;">
+        <div class="card-header">
+            <h5 class="card-title" id="book_title">Название книги</h5>
+        </div>
+        <div class="card-body">
+            <div class="row mb-2">
+                <div class="col-md-4 fw-bold">Автор:</div>
+                <div class="col-md-8" id="book_author">-</div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-md-4 fw-bold">Категория:</div>
+                <div class="col-md-8" id="book_category">-</div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-md-4 fw-bold">Тип:</div>
+                <div class="col-md-8" id="book_type">-</div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-md-4 fw-bold">Директория:</div>
+                <div class="col-md-8" id="book_dir">-</div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-md-4 fw-bold">Полный путь:</div>
+                <div class="col-md-8" id="book_path">-</div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-md-4 fw-bold">Закладки:</div>
+                <div class="col-md-8" id="book_bookmark">-</div>
+            </div>
+
+            <!-- Lua данные -->
+            <hr>
+            <h6>Прогресс чтения</h6>
+            <div class="row mb-2">
+                <div class="col-md-4 fw-bold">Прочитано:</div>
+                <div class="col-md-8" id="book_percent">-</div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-md-4 fw-bold">Статус:</div>
+                <div class="col-md-8" id="book_status">-</div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-md-4 fw-bold">Завершена:</div>
+                <div class="col-md-8" id="book_finished">-</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Сообщение если книга не найдена -->
+    <div id="book_not_found" class="alert alert-danger" style="display: none;">
+        Книга не найдена
+    </div>
+</div>
+
+<script>
+    document.getElementById('book_select').addEventListener('change', async function() {
+        const bookName = this.value;
+        const bookInfo = document.getElementById('book_info');
+        const bookNotFound = document.getElementById('book_not_found');
+
+        if (!bookName) {
+            bookInfo.style.display = 'none';
+            bookNotFound.style.display = 'none';
+            return;
+        }
+
+        try {
+            const response = await fetch('/book/info', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ book_name: bookName })
+            });
+
+            const data = await response.json();
+
+            if (data.found) {
+                bookNotFound.style.display = 'none';
+                bookInfo.style.display = 'block';
+
+                document.getElementById('book_title').textContent = data.name || '-';
+                document.getElementById('book_author').textContent = data.author || '-';
+                document.getElementById('book_category').textContent = data.category || '-';
+                document.getElementById('book_type').textContent = data.type || '-';
+                document.getElementById('book_dir').textContent = data.dir || '-';
+                document.getElementById('book_path').textContent = data.full_path || '-';
+                document.getElementById('book_bookmark').textContent = data.has_bookmark ? 'Да' : 'Нет';
+                document.getElementById('book_percent').textContent = data.percent_finished 
+                    ? (data.percent_finished * 100).toFixed(1) + '%' 
+                    : '-';
+                document.getElementById('book_status').textContent = data.status || '-';
+                document.getElementById('book_finished').textContent = data.is_finished ? 'Да' : 'Нет';
+            } else {
+                bookInfo.style.display = 'none';
+                bookNotFound.style.display = 'block';
+            }
+        } catch (error) {
+            console.error('Ошибка при получении данных:', error);
+            bookInfo.style.display = 'none';
+            bookNotFound.style.display = 'block';
+        }
+    });
+</script>
+{% endblock %}

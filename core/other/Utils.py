@@ -2,6 +2,10 @@ import io
 import os
 from os.path import exists
 
+import requests
+
+from data.Wrappers import log
+
 user_input_cursor: str = '>> '
 
 
@@ -111,3 +115,51 @@ def is_binary(stream):
     if mode:
         return 'b' in mode
     return not isinstance(stream, io.TextIOBase)
+
+
+@log
+def get_book_cover():
+    pass
+
+
+@log
+def __get_image_from_url(url: str) -> FSInputFile | None:
+    """
+    Get cat image from site.
+    :param url: url to random cat site.
+    :return: tuple with BinaryIO stream and file name.
+    """
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, 'html.parser')
+        img_tag = soup.find_all('img')[1]  # because on this site first img (0) is site logo
+
+        if img_tag and img_tag.get('src'):
+            img_url = img_tag['src']
+
+            if not img_url.startswith(('http://', 'https://')):
+                from urllib.parse import urljoin
+                img_url = urljoin(url, img_url)
+
+            return __download_res(img_url)
+        else:
+            print('There is no picture on this page')
+    except Exception as e:
+        print(f"Error in get image from url - {e}")
+
+
+@log
+def __download_res(res_url: str):
+    """
+    Private function for downloading resource (image or video) from network.
+    :param res_url: url address.
+    :return: resource file name.
+    """
+    filename = os.path.basename(res_url)
+    with open(filename, 'wb') as f:
+        img_response = requests.get(res_url)
+        img_response.raise_for_status()
+        f.write(img_response.content)
+        print(f'Resource saved as {filename}')
+        return FSInputFile(filename)

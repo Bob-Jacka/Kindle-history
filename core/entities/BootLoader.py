@@ -40,10 +40,10 @@ class BootLoader:
         """
         self.__init_app_entities()
         try:
-            webinterface = Web_interface(logger=self.local_logger)
-            webinterface.attach_entities(stat_module=self.analytic_module,
+            webinterface = Web_interface(logger=self.local_logger,
+                                         stat_module=self.analytic_module,
                                          history_module=self.history_module,
-                                         transfer_module=self.transfer_module)
+                                         transfer_module=self.transfer_module,)
             webinterface.run_interface()
         except Exception as e:
             self.local_logger.log(f'Run browser app failed - {e}')

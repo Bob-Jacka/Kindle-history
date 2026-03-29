@@ -6,3 +6,4 @@ core/entities/browser/WebInterface/secret_key.py
 *.xml
 *.imi
 .idea
+data/Tokens.py

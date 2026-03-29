@@ -17,6 +17,30 @@
             <a class="navbar-brand" href="/remove">Remove existing book</a>
         </div>
     </li>
+
+    <li>
+        <div>
+            <a class="navbar-brand" id="find_book" href="/find">Find book in history</a>
+        </div>
+    </li>
+    <script>
+        document.getElementById('find_book').addEventListener('click', (event) => {
+        event.preventDefault();
+        const userText = prompt('Введите название книги:');
+        if (userText !== null && userText.trim() !== '') {
+        const resp = await fetch('/find', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ text: userText })
+        });
+        const result = await resp.json();
+        console.log('Server respond:', result);
+        alert(result.message);
+    }
+});
+    </script>
 </ul>
 
 {% endblock %}
