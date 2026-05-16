@@ -3,7 +3,7 @@
 {% block title %}Manager description{% endblock %}
 
 {% block content %}
-<p>Actions page - choose action with books:</p>
+<p>Actions page - choose action with books in history:</p>
 
 <ul>
     <li>
@@ -26,7 +26,7 @@
     <script>
         document.getElementById('find_book').addEventListener('click', (event) => {
         event.preventDefault();
-        const userText = prompt('Введите название книги:');
+        const userText = prompt('Enter book name to search:');
         if (userText !== null && userText.trim() !== '') {
         const resp = await fetch('/find', {
             method: 'POST',

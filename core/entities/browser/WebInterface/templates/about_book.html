@@ -56,28 +56,12 @@
                 <div class="col-md-4 fw-bold">Закладки:</div>
                 <div class="col-md-8" id="book_bookmark">-</div>
             </div>
-
-            <!-- Lua данные -->
-            <hr>
-            <h6>Прогресс чтения</h6>
-            <div class="row mb-2">
-                <div class="col-md-4 fw-bold">Прочитано:</div>
-                <div class="col-md-8" id="book_percent">-</div>
-            </div>
-            <div class="row mb-2">
-                <div class="col-md-4 fw-bold">Статус:</div>
-                <div class="col-md-8" id="book_status">-</div>
-            </div>
-            <div class="row mb-2">
-                <div class="col-md-4 fw-bold">Завершена:</div>
-                <div class="col-md-8" id="book_finished">-</div>
-            </div>
         </div>
     </div>
 
     <!-- Сообщение если книга не найдена -->
     <div id="book_not_found" class="alert alert-danger" style="display: none;">
-        Книга не найдена
+        Book not found
     </div>
 </div>
 
@@ -115,11 +99,6 @@
                 document.getElementById('book_dir').textContent = data.dir || '-';
                 document.getElementById('book_path').textContent = data.full_path || '-';
                 document.getElementById('book_bookmark').textContent = data.has_bookmark ? 'Да' : 'Нет';
-                document.getElementById('book_percent').textContent = data.percent_finished 
-                    ? (data.percent_finished * 100).toFixed(1) + '%' 
-                    : '-';
-                document.getElementById('book_status').textContent = data.status || '-';
-                document.getElementById('book_finished').textContent = data.is_finished ? 'Да' : 'Нет';
             } else {
                 bookInfo.style.display = 'none';
                 bookNotFound.style.display = 'block';

@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Final
 
 from core.entities.BotLogger import BotLogger
-from core.entities.Formatter import Format
 from data.Constants import INPUT_SYM, STATIC_DIR_NAME_FOR_FAV
 
 

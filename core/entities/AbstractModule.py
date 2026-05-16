@@ -13,7 +13,3 @@ class Module(abc.ABC):
         :return: None
         """
         pass
-
-    @abstractmethod
-    def run_module_web(self) -> None:
-        pass

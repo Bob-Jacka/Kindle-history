@@ -1,7 +1,4 @@
 import abc
-
-from core.entities.AbstractModule import Module
-
 import datetime
 import os
 import platform
@@ -10,8 +7,9 @@ import shutil
 from enum import Enum
 from pathlib import Path
 
-from core.entities.Formatter import Format
+from core.entities.AbstractModule import Module
 from core.entities.Book_data import Book_data
+from core.entities.Formatter import Format
 from data.Constants import (
     NON_BOOK_EXTENSIONS,
     INPUT_SYM

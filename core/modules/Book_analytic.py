@@ -18,10 +18,6 @@ class Book_analytic(Module):
         self.config = app_config
 
     @log
-    def run_module_web(self) -> None:
-        pass
-
-    @log
     def get_average_reading_speed(self, start_date, count_method: Literal['days', 'months', 'year']):
         """
         Count average speed of reading.

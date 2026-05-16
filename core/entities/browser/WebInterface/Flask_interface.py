@@ -1,6 +1,7 @@
 """
 Flask driven web engine
 """
+import warnings
 from time import sleep
 
 from flask import (
@@ -178,16 +179,6 @@ def get_book_info():
     )
     Utils.get_book_cover()  # search for book cover
 
-    # Get lua data
-    lua_data = book_obj.get_lua_data()
-    percent_finished = None
-    status = None
-    is_finished: bool = False
-
-    if lua_data:
-        _, percent_finished, status = lua_data
-        is_finished = Book_data.decide_if_book_finished(lua_data)
-
     return jsonify({
         'found': True,
         'name': book_obj.get_book_name(),
@@ -196,10 +187,7 @@ def get_book_info():
         'type': book_obj.get_book_type(),
         'dir': book_obj.get_current_dir(),
         'full_path': book_obj.get_full_path(),
-        'has_bookmark': book_obj.has_bookmark_dir(),
-        'percent_finished': percent_finished,
-        'status': status,
-        'is_finished': is_finished
+        'has_bookmark': book_obj.has_bookmark_dir()
     })
 
 

@@ -15,9 +15,6 @@ import yadisk
 
 from core.entities.AbstractModule import Module
 from core.entities.Book_data import Book_data
-from data.Constants import (
-    STATIC_DIR_NAME_FOR_FAV
-)
 from data.Tokens import TOKEN_YANDEX
 from data.Wrappers import log
 
@@ -175,10 +172,6 @@ class Kindle_history(Module):
         self.readFile = app_config.get_read_file_name()
         self.memorize_module = Memorize(app_config=app_config, logger=self.local_logger)
 
-    @log
-    def run_module_web(self) -> None:
-        pass
-
     def __parse_line(self, line: str) -> dict[str, str]:
         """
         Split line into map, ex. <book name>|<book author>|<book release year>
@@ -187,10 +180,11 @@ class Kindle_history(Module):
         """
         split_line = line.split('|')
         to_return: dict[str, str] = dict()
-        if len(split_line) < 4 and len(split_line) == 1:  # case of no such format
+        if len(split_line) < 5 and len(split_line) == 1:  # case of no such format
             to_return['name'] = str(split_line)
             to_return['author'] = '-'
             to_return['date'] = '-'
+            to_return['when_read'] = '-'
             to_return['type'] = '-'
             self.local_logger.log('Wrong format string in parsing found')
             return to_return
@@ -198,7 +192,8 @@ class Kindle_history(Module):
             to_return['name'] = split_line[0]
             to_return['author'] = split_line[1]
             to_return['date'] = split_line[2]
-            to_return['type'] = split_line[3]
+            to_return['when_read'] = split_line[3]
+            to_return['type'] = split_line[4]
             return to_return
 
     @log
